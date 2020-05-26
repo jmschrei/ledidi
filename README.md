@@ -4,11 +4,19 @@ Ledidi is an approach for designing edits to biological sequences that induce de
 
 Currently, we've paired Ledidi with the [Basenji model](https://github.com/calico/basenji) and designed edits to the human genome that create CTCF binding, knock out CTCF binding, and induce cell-type specific binding of JUND. 
 
-Read our paper here (not here yet :().
+Read our preprint here (not here yet :().
 
 ### Installation
 
 You can install Ledidi with `pip install ledidi`.
+
+### Example
+
+![](ctcf_perturbation.png)
+
+The input to Ledidi is a biological sequence and a desired output from the model (A, cyan) and the output is an edited sequence and the output from the paired predictive model (A, magenta). A hyperparameter in the optimization process, lambda, controls the number of sequence edits made (B) and the distance between the returned output and the desired output (C). 
+
+In this example Ledidi is knocking out or knocking in CTCF binding. When CTCF is knocked out, Ledidi makes an average of ~5 edits per locus, and these edits occurs primarily at the most conserved positions in the CTCF motif (on both strands, D/E). Ledidi was able to knock out or knock in CTCF binding at almost all loci. 
 
 ### Usage
 
