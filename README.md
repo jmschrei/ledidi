@@ -4,7 +4,7 @@ Ledidi is an approach for designing edits to biological sequences that induce de
 
 Currently, we've paired Ledidi with the [Basenji model](https://github.com/calico/basenji) and designed edits to the human genome that create CTCF binding, knock out CTCF binding, and induce cell-type specific binding of JUND. 
 
-Read our preprint here (not here yet :().
+Take a look at our [preprint](https://www.biorxiv.org/content/10.1101/2020.05.21.109686v1)!
 
 ### Installation
 
