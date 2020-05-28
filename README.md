@@ -8,7 +8,7 @@ Take a look at our [preprint](https://www.biorxiv.org/content/10.1101/2020.05.21
 
 ### Installation
 
-You can install Ledidi with `pip install ledidi`.
+You can install Ledidi with `pip install ledidi` and you can download the Basenji model we used with `wget https://storage.googleapis.com/basenji_barnyard/model_human.h5`, though any model is can be used with Ledidi.
 
 ### Example
 
