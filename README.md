@@ -54,7 +54,7 @@ custom_objects = {
 
 model = load_model("model_human.h5", custom_objects)
 model.compile()
-regressor = TensorflowRegressor(model=model)
+regressor = TensorFlowRegressor(model=model)
 
 # Index 687 is CTCF signal in GM12878
 mask = numpy.zeros((1, 1024, 5313), dtype='float32')
