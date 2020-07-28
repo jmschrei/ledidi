@@ -138,7 +138,7 @@ class Ledidi(object):
         The temperature of the Gumbel-softmax reparameterization. High values
         force the continuous version of the sequence to approach the uniform
         distribution whereas low values force it to match the discrete
-        distribution smoothly. Default is 0.05.
+        distribution smoothly. Default is 3.
 
     l : float64, positive, optional
         The weight of the second term in the loss function. Setting l to a
@@ -175,8 +175,8 @@ class Ledidi(object):
         Whether to print logs associated with this object. Default is True.
     """ 
 
-    def __init__(self, model, tau=0.05, l=10, max_iter=100, lr=1e-3, mask=None,
-        early_stopping=10, min_x=0.01, max_x=0.99, verbose=True):
+    def __init__(self, model, tau=3, l=10, max_iter=100, lr=1e-3, mask=None,
+        early_stopping=100, min_x=0.01, max_x=0.99, verbose=True):
         self.model = model
         self.tau = tau
         self.l = l
@@ -188,13 +188,16 @@ class Ledidi(object):
         self.mask = mask
         self.verbose = verbose
 
-    def _from_x_to_w(self, x, tau, min_x=0.01, max_x=0.99):
+    def _from_x_to_w(self, x, tau, g, min_x=0.01, max_x=0.99):
         x = numpy.maximum(x, min_x)
         x = numpy.minimum(x, max_x)
-        return numpy.log(x) * tau
+        w = numpy.exp(numpy.log(x) * tau - g)
+        w = numpy.maximum(w, MIN_W)
+        return w
 
-    def _from_w_to_x(self, w, tau):
-        x = numpy.array(w / tau)[0]
+    def _from_w_to_x(self, w, tau, g):
+        w = numpy.maximum(w, MIN_W)
+        x = numpy.array((numpy.log(w) + g) / tau)[0]
         x = numpy.exp(x.T - logsumexp(x, axis=1)).T
         x = numpy.expand_dims(x, 0)
         return x
@@ -206,8 +209,9 @@ class Ledidi(object):
         if self.verbose:
             print('batch_missing_loc_indices={}'.format(missing_indices.shape[0]))
 
-        curr_w = self._from_x_to_w(seq, tau, self.min_x, self.max_x)
-        curr_x = self._from_w_to_x(curr_w, tau) 
+        g = -numpy.log(-numpy.log(numpy.random.uniform(MIN_W, 1, size=seq.shape)))
+        curr_w = self._from_x_to_w(seq, tau, g, self.min_x, self.max_x)
+        curr_x = self._from_w_to_x(curr_w, tau, g) 
         curr_x[0, missing_indices, :] = 0
 
         ref_x = curr_x.copy()
@@ -249,8 +253,9 @@ class Ledidi(object):
             curr_w_surrogate = new_w + (1.0 * i / (i+2)) * (new_w - curr_w)
             curr_w = new_w
 
-            curr_x = self._from_w_to_x(curr_w, tau)
-            curr_x_surrogate = self._from_w_to_x(curr_w_surrogate, tau)
+            g = -numpy.log(-numpy.log(numpy.random.uniform(MIN_W, 1, size=seq.shape)))
+            curr_x = self._from_w_to_x(curr_w, tau, g)
+            curr_x_surrogate = self._from_w_to_x(curr_w_surrogate, tau, g)
 
             curr_x[0, missing_indices, :] = 0
             curr_x_surrogate[0, missing_indices, :] = 0
