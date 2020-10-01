@@ -4,7 +4,7 @@
 from .ledidi import Ledidi
 from .ledidi import TensorFlowRegressor
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 import numpy
 import pyBigWig
@@ -64,7 +64,8 @@ def sequence_to_ohe(sequence, ignore='N', alphabet=None, dtype='int8',
 		sequence = list(sequence)
 
 	alphabet = alphabet or numpy.unique(sequence)
-	alphabet_lookup = {char: i for i, char in enumerate(alphabet) if char != ignore}
+	alphabet = [char for char in alphabet if char != ignore]
+	alphabet_lookup = {char: i for i, char in enumerate(alphabet)}
 
 	ohe = numpy.zeros((len(sequence), len(alphabet)), dtype=dtype)
 	for i, char in tqdm(enumerate(sequence), disable=d, desc=name, **kwargs):
