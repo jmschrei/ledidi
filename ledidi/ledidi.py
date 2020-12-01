@@ -223,7 +223,7 @@ class Ledidi(object):
         curr_x = self._from_w_to_x(curr_w, tau, g) 
         curr_x[0, missing_indices, :] = 0
 
-        ref_x = curr_x.copy()
+        ref_x = seq.copy()
 
         curr_w_surrogate = curr_w.copy()
         curr_x_surrogate = curr_x.copy()
