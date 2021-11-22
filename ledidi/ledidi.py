@@ -9,6 +9,8 @@ from scipy.special import logsumexp
 import tensorflow as tf
 import tensorflow.keras.backend as k
 
+MIN_W = 0.001
+
 class TensorFlowRegressor():
     """A wrapper for a TensorFlow regression model.
 
@@ -173,12 +175,16 @@ class Ledidi(object):
     max_x : float, optional
         A parameter of the Gumbel-softmax distribution. Default is 0.99.
 
+    random_state : int or None, optional
+        The seed to use for random calculations.
+
     verbose: bool, optional
         Whether to print logs associated with this object. Default is True.
     """ 
 
     def __init__(self, model, tau=3, l=10, max_iter=100, lr=1e-3, mask=None,
-        early_stopping=100, min_x=0.01, max_x=0.99, verbose=True):
+        early_stopping=-1, min_x=0.01, max_x=0.99, random_state=None,
+        verbose=True):
         self.model = model
         self.tau = tau
         self.l = l
@@ -188,6 +194,7 @@ class Ledidi(object):
         self.min_x = min_x
         self.max_x = max_x
         self.mask = mask
+        self.random_state = numpy.random.RandomState(random_state)
         self.verbose = verbose
 
     def _from_x_to_w(self, x, tau, g, min_x=0.01, max_x=0.99):
@@ -205,18 +212,20 @@ class Ledidi(object):
         return x
 
     def fit_transform(self, seq, epi_bar):
+        seq = numpy.array(seq, ndmin=3)
+
         missing_indices = numpy.where(numpy.sum(seq[0], axis=1)<=0)[0]
         tau = self.tau
 
         if self.verbose:
             print('batch_missing_loc_indices={}'.format(missing_indices.shape[0]))
 
-        g = -numpy.log(-numpy.log(numpy.random.uniform(MIN_W, 1, size=seq.shape)))
+        g = -numpy.log(-numpy.log(self.random_state.uniform(MIN_W, 1, size=seq.shape)))
         curr_w = self._from_x_to_w(seq, tau, g, self.min_x, self.max_x)
         curr_x = self._from_w_to_x(curr_w, tau, g) 
         curr_x[0, missing_indices, :] = 0
 
-        ref_x = curr_x.copy()
+        ref_x = seq.copy()
 
         curr_w_surrogate = curr_w.copy()
         curr_x_surrogate = curr_x.copy()
@@ -255,7 +264,7 @@ class Ledidi(object):
             curr_w_surrogate = new_w + (1.0 * i / (i+2)) * (new_w - curr_w)
             curr_w = new_w
 
-            g = -numpy.log(-numpy.log(numpy.random.uniform(MIN_W, 1, size=seq.shape)))
+            g = -numpy.log(-numpy.log(self.random_state.uniform(MIN_W, 1, size=seq.shape)))
             curr_x = self._from_w_to_x(curr_w, tau, g)
             curr_x_surrogate = self._from_w_to_x(curr_w_surrogate, tau, g)
 
@@ -276,3 +285,4 @@ class Ledidi(object):
                 break
 
         return best_sequence
+
