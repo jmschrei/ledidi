@@ -1,6 +1,8 @@
 # ledidi.py
 # Authors: Yang Lu <ylu465@uw.edu> and Jacob Schreiber <jmschreiber91@gmail.com>
 
+MIN_W = 0.001
+
 import numpy
 from scipy.special import logsumexp
 
