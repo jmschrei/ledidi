@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name='ledidi',
-    version='0.2.0',
-    author='Yang Lu and Jacob Schreiber',
+    version='1.0.0',
+    author='Jacob Schreiber and Yang Lu',
     author_email='jmschreiber91@gmail.com',
     packages=['ledidi'],
     url='http://pypi.python.org/pypi/ledidi/',
