@@ -1,14 +1,20 @@
-# Ledidi
+# ledidi
 
-Ledidi is an approach for designing edits to biological sequences that induce desired properties. A difficulty with this task is that biological sequences are discrete and so direct optimization can be difficult. Ledidi overcomes this challenge through using the Gumbel-softmax reparameterization trick to turn a discrete sequence input into a continuous representation where standard gradient descent methods can be applied easily. Ledidi differs from most current biological sequence design methods in that they generally design entire sequences that satisfy certain properties, whereas Ledidi designs compact sets of edits to given sequences that result in the desired outcome.
+> **Note**:
+> ledidi has recently been rewritten in PyTorch. Please see the tutorials folder for examples on how to use the current version with your PyTorch models. Unfortunately, ledidi no longer supports TensorFlow models. 
 
-Currently, we've paired Ledidi with the [Basenji model](https://github.com/calico/basenji) and designed edits to the human genome that create CTCF binding, knock out CTCF binding, and induce cell-type specific binding of JUND. 
+ledidi is an approach for designing edits to biological sequences that induce desired properties. It does this by inverting the normal way that people use machine learning models. Normally, one holds the data constant and uses gradients to update the model weights; ledidi holds the model constant and uses gradients to update the *data*. In this case, the data are sequence that edits are being designed for. Using this simple paradigm, ledidi *turns any machine learning model into a biological sequence editor*, regardless of the original purpose of the model. 
+
+### Installation
+`pip install ledidi`
+
+### tl;dr
+A challenge with designing edits for categorical sequences is that you cannot smoothly apply gradients to them as one could with continuous weight vectors -- when the sequence has to be one-hot encoded you can't pass in `[0.1, 0.02, 0.3, -0.1]`, for example. A wetlab would be very confused if told to construct that sequence. Further, most machine learning models applied to categorical sequences are calibrated towards expecting exactly a one-hot encoded input and may fall out-of-distribution in weird ways otherwise.
+
+ledidi phrases the design problem as an optimization over a weight matrix. Specifically, given a one-hot encoded sequence `X`, some small `eps` value, ledidi will convert the sequence into logits `log(X + eps) + weights` and then use these logits to generate a new sequence given the Gumbel-softmax distribution. The new one-hot encoded sequence is then passed through the oracle model, gradients are calculated with respect to the desired model output, and the weight matrix is updated in such a way that negative values encourage the sampled one-hot encoded sequences to not take certain values at certain positions and positive values vice-versa.
 
 Take a look at our [preprint](https://www.biorxiv.org/content/10.1101/2020.05.21.109686v1)!
 
-### Installation
-
-You can install Ledidi with `pip install ledidi` and you can download the Basenji model we used with `wget https://storage.googleapis.com/basenji_barnyard/model_human.h5`, though any model is can be used with Ledidi.
 
 ### Example
 
@@ -18,49 +24,7 @@ The input to Ledidi is a biological sequence and a desired output from the model
 
 In this example Ledidi is knocking out or knocking in CTCF binding. When CTCF is knocked out, Ledidi makes an average of ~5 edits per locus, and these edits occurs primarily at the most conserved positions in the CTCF motif (on both strands, D/E). Ledidi was able to knock out or knock in CTCF binding at almost all loci. 
 
-### Usage
 
-Ledidi can be paired with any differentiable model, but provides a wrapper for regression models that are implemented in TensorFlow. Below is a code example that knocks out CTCF binding at a specific CTCF site. 
-
-```python
-import numpy
-import tensorflow as tf
-
-from ledidi import Ledidi
-from ledidi import TensorFlowRegressor
-
-from tensorflow.keras.models import load_model
-from tensorflow.keras.utils import CustomObjectScope
-
-# These two objects are necessary for the Basenji model
-class GELU(tf.keras.layers.Layer):
-    def __init__(self, **kwargs):
-        super(GELU, self).__init__()
-    
-    def call(self, x, training):
-        return tf.keras.activations.sigmoid(1.702 * x) * x
-
-class StochasticShift(tf.keras.layers.Layer):
-    def __init__(self, shift_max=0, pad='uniform', **kwargs):
-        super(StochasticShift, self).__init__()
-
-    def call(self, seq_1hot, training):
-        return seq_1hot
-
-custom_objects = {
-    'StochasticShift': StochasticShift, 
-    'GELU': GELU
-}
-
-model = load_model("model_human.h5", custom_objects)
-model.compile()
-regressor = TensorFlowRegressor(model=model)
-
-# Index 687 is CTCF signal in GM12878
-mask = numpy.zeros((1, 1024, 5313), dtype='float32')
-mask[:, :, 687] = 1.0
-
-mutator = Ledidi(regressor, mask=mask, l=1e2)
 
 sequence = numpy.load("CTCF/CTCF-seqs.npz")['arr_0'].astype('float32')[0].reshape(1, 131072, 4)
 epi = model.predict(sequence)
