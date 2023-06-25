@@ -9,12 +9,11 @@ ledidi is an approach for designing edits to biological sequences that induce de
 `pip install ledidi`
 
 ### tl;dr
-A challenge with designing edits for categorical sequences is that you cannot smoothly apply gradients to them as one could with continuous weight vectors -- when the sequence has to be one-hot encoded you can't pass in `[0.1, 0.02, 0.3, -0.1]`, for example. A wetlab would be very confused if told to construct that sequence. Further, most machine learning models applied to categorical sequences are calibrated towards expecting exactly a one-hot encoded input and may fall out-of-distribution in weird ways otherwise.
+A challenge with designing edits for categorical sequences is that the inputs are usually one-hot encoded but gradients are continuous. This challenge poses two problems: (1) ledidi cannot directly apply gradients to edit an input sequence because doing so would produce something that is not one-hot encoded, and (2) most models have been trained on exclusively (or almost exclusively) one-hot encoded sequence and are calibrated for that distribution, and so passing in an edited sequence that is not one-hot encoded would fall off the manifold that the model expects and yield anomalous results.
 
-ledidi phrases the design problem as an optimization over a weight matrix. Specifically, given a one-hot encoded sequence `X`, some small `eps` value, ledidi will convert the sequence into logits `log(X + eps) + weights` and then use these logits to generate a new sequence given the Gumbel-softmax distribution. The new one-hot encoded sequence is then passed through the oracle model, gradients are calculated with respect to the desired model output, and the weight matrix is updated in such a way that negative values encourage the sampled one-hot encoded sequences to not take certain values at certain positions and positive values vice-versa.
+ledidi resolves this challenge by phrasing edit design as an optimization problem over a weight matrix. Specifically, given a one-hot encoded sequence `X`, some small `eps` value, ledidi converts the one-hot encoded sequence into logits `log(X + eps) + weights` and then samples a one-hot encoded sequence from these logits assuming given the Gumbel-softmax distribution. The new one-hot encoded sequence is passed through the provided predictive model, gradients are calculated with respect to the difference between the actual and desired model output, and the `weights` matrix is updated in such a way that negative values encourage the sampled one-hot encoded sequences to not take certain values at certain positions and positive values vice-versa.
 
 Take a look at our [preprint](https://www.biorxiv.org/content/10.1101/2020.05.21.109686v1)!
-
 
 ### Example
 
