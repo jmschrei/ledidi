@@ -33,6 +33,11 @@ class Ledidi(torch.nn.Module):
         The number of categories and the number of positions, respectively,
         in the sequence to be edited. For nucleotides this might be (4, 1000).
 
+    target: int or None
+        When given a multi-task model, the target to slice out and feed into
+        output_loss when calculating the gradient. If None, perform no slicing.
+        Default is None.
+
     input_loss: torch.nn.Loss, optional
         A loss to apply to the input space. By default this is the L1 loss
         which corresponds to the number of positions that have been edited.
@@ -61,6 +66,11 @@ class Ledidi(torch.nn.Module):
 
     max_iter: int, optional
         The maximum number of iterations to continue generating samples.
+        Default is 5000.
+
+    report_iter: int optional
+        The number of iterations to perform before reporting results of the
+        optimization. Default is 100.
 
     lr: float, optional
         The learning rate of the procedure. Default is 1e-2.
@@ -75,21 +85,24 @@ class Ledidi(torch.nn.Module):
         Whether to print the loss during design. Default is True.
     """
 
-    def __init__(self, model, shape, input_loss=torch.nn.L1Loss(
+    def __init__(self, model, shape, target=None, input_loss=torch.nn.L1Loss(
         reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=100, 
-        batch_size=32, max_iter=5000, lr=1e-2, eps=1e-4, verbose=True):
+        batch_size=32, max_iter=5000, report_iter=100, lr=1e-2, eps=1e-4, 
+        verbose=True):
         super().__init__()
         
         for param in model.parameters():
             param.requires_grad = False
             
         self.model = model.eval()
+        self.target = slice(target)
         self.input_loss = input_loss
         self.output_loss = output_loss
         self.tau = tau
         self.l = l
         self.batch_size = batch_size
         self.max_iter = max_iter
+        self.report_iter = report_iter
         self.lr = lr
         self.eps = eps
         self.verbose = verbose
@@ -122,7 +135,7 @@ class Ledidi(torch.nn.Module):
         """
 
         logits = torch.log(X + self.eps) + self.weights
-        logits = logits.expand(self.batch_size, -1, -1)
+        logits = logits.expand(self.batch_size, *(-1 for i in range(X.ndim-1)))
         return torch.nn.functional.gumbel_softmax(logits, tau=self.tau, 
             hard=True, dim=1)
         
@@ -159,20 +172,20 @@ class Ledidi(torch.nn.Module):
 
         optimizer = torch.optim.AdamW((self.weights,), lr=self.lr)
         
-        y_hat = self.model(X)
+        y_hat = self.model(X)[:, self.target]
 
         output_loss = self.output_loss(y_hat, y_bar).item()
         best_total_loss = self.l * output_loss
         best_sequence = X
         
         if self.verbose:
-            print(f"""iter=I\tinput_loss=0\toutput_loss={output_loss}
-                \ttotal_loss={best_total_loss}""")
+            print(("iter=I\tinput_loss=0\toutput_loss={:4.4}\t" + 
+                "total_loss={:4.4}").format(output_loss, best_total_loss))
             tic = time.time()
         
-        for i in range(self.max_iter):
+        for i in range(self.max_iter+1):
             X_hat = self(X)
-            y_hat = self.model(X_hat)
+            y_hat = self.model(X_hat)[:, self.target]
             
             input_loss = self.input_loss(X_hat, X) / (X_hat.shape[0] * 2)
             output_loss = self.output_loss(y_hat, y_bar)
@@ -180,9 +193,9 @@ class Ledidi(torch.nn.Module):
             total_loss = input_loss + self.l * output_loss
             total_loss_ = total_loss.item()
             
-            if self.verbose and i % 500 == 0:
-                print("""iter={}\tinput_loss={:4.4}\toutput_loss={:4.4}\t
-                    total_loss={:4.4}\ttime={:4.4}""".format(i, 
+            if self.verbose and i % self.report_iter == 0:
+                print(("iter={}\tinput_loss={:4.4}\toutput_loss={:4.4}\t" +
+                    "total_loss={:4.4}\ttime={:4.4}").format(i, 
                         input_loss.item(), output_loss.item(), 
                         total_loss_, time.time() - tic))
                 tic = time.time()
