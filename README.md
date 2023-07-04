@@ -9,7 +9,7 @@ A challenge with designing edits for categorical sequences is that the inputs ar
 
 ledidi resolves this challenge by phrasing edit design as an optimization problem over a weight matrix. Specifically, given a one-hot encoded sequence `X`, some small `eps` value, ledidi converts the one-hot encoded sequence into logits `log(X + eps) + weights` and then samples a one-hot encoded sequence from these logits assuming given the Gumbel-softmax distribution. The new one-hot encoded sequence is passed through the provided predictive model, gradients are calculated with respect to the difference between the actual and desired model output, and the `weights` matrix is updated in such a way that negative values encourage the sampled one-hot encoded sequences to not take certain values at certain positions and positive values vice-versa.
 
-ledidi works on any sequence model in genomics. Although our examples right now are largely nucleotide sequence-based, one can apply ledidi out-of-the-box to RNA or protein models. The only limitation is what will fit in your GPU! So designing nucleotide edits to control gene expression using Enformer, or designing amino acid edits to control protein shape with AlphaFold2, may prove time-consuming.
+Although our examples right now are largely nucleotide sequence-based, one can also apply ledidi out-of-the-box to RNA or protein models (or really, to any model with a sequence of categorical inputs). The only limitation is what will fit in your GPU! So designing nucleotide edits to control gene expression using Enformer, or designing amino acid edits to control protein shape with AlphaFold2, may prove time-consuming.
 
 Take a look at our [preprint](https://www.biorxiv.org/content/10.1101/2020.05.21.109686v1)!
 
