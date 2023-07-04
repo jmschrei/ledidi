@@ -75,6 +75,11 @@ class Ledidi(torch.nn.Module):
     lr: float, optional
         The learning rate of the procedure. Default is 1e-2.
 
+    input_mask: torch.Tensor or None, shape=(shape[-1],)
+        A mask indicating what positions cannot be edited. This will set the
+        initial weights mask to -inf at those positions. If None, no positions
+        are masked out. Default is None.
+
     eps: float, optional
         The epsilon to add to the one-hot encoding. Because the first step
         of the procedure is to take log(X + eps) the smaller eps is the
@@ -87,15 +92,14 @@ class Ledidi(torch.nn.Module):
 
     def __init__(self, model, shape, target=None, input_loss=torch.nn.L1Loss(
         reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=100, 
-        batch_size=32, max_iter=5000, report_iter=100, lr=1e-2, eps=1e-4, 
-        verbose=True):
+        batch_size=32, max_iter=5000, report_iter=100, lr=1e-2, input_mask=None,
+        eps=1e-4, verbose=True):
         super().__init__()
         
         for param in model.parameters():
             param.requires_grad = False
             
         self.model = model.eval()
-        self.target = slice(target)
         self.input_loss = input_loss
         self.output_loss = output_loss
         self.tau = tau
@@ -104,9 +108,15 @@ class Ledidi(torch.nn.Module):
         self.max_iter = max_iter
         self.report_iter = report_iter
         self.lr = lr
+        self.input_mask = input_mask
         self.eps = eps
         self.verbose = verbose
-        
+
+        if target is None:
+            self.target = slice(target)
+        else:
+            self.target = target
+
         self.weights = torch.nn.Parameter(torch.zeros(1, *shape, 
             dtype=torch.float32, requires_grad=True))
         
@@ -171,6 +181,12 @@ class Ledidi(torch.nn.Module):
         """
 
         optimizer = torch.optim.AdamW((self.weights,), lr=self.lr)
+
+        if self.input_mask is not None:
+            self.weights.requires_grad = False
+            self.weights.T[self.input_mask] = float("-inf")
+            self.weights[X.type(torch.bool)] = 0
+            self.weights.requires_grad = True
         
         y_hat = self.model(X)[:, self.target]
 
