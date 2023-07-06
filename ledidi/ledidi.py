@@ -150,7 +150,7 @@ class Ledidi(torch.nn.Module):
             hard=True, dim=1)
         
     def fit_transform(self, X, y_bar):
-        """Appply the Ledidi procedure to design edits for a sequence.
+        """Apply the Ledidi procedure to design edits for a sequence.
 
         This procedure takes in a single sequence and a desired output from
         the model and designs edits that cause the model to predict the desired
