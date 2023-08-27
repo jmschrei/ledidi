@@ -86,6 +86,10 @@ class Ledidi(torch.nn.Module):
         higher a value in the design weight needs to be achieved before
         an edit can be induced. Default is 1e-4.
 
+    return_history: bool, optional
+        Whether to return all edits made at all training steps along with
+        their losses. Default is False.
+
     verbose: bool, optional
         Whether to print the loss during design. Default is True.
     """
@@ -93,7 +97,7 @@ class Ledidi(torch.nn.Module):
     def __init__(self, model, shape, target=None, input_loss=torch.nn.L1Loss(
         reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=100, 
         batch_size=32, max_iter=5000, report_iter=100, lr=1e-2, input_mask=None,
-        eps=1e-4, verbose=True):
+        eps=1e-4, return_history=False, verbose=True):
         super().__init__()
         
         for param in model.parameters():
@@ -110,6 +114,7 @@ class Ledidi(torch.nn.Module):
         self.lr = lr
         self.input_mask = input_mask
         self.eps = eps
+        self.return_history = return_history
         self.verbose = verbose
 
         if target is None:
@@ -181,6 +186,8 @@ class Ledidi(torch.nn.Module):
         """
 
         optimizer = torch.optim.AdamW((self.weights,), lr=self.lr)
+        history = {'edits': [], 'input_loss': [], 'output_loss': [], 
+            'total_loss': [], 'batch_size': self.batch_size}
 
         if self.input_mask is not None:
             self.weights.requires_grad = False
@@ -193,13 +200,9 @@ class Ledidi(torch.nn.Module):
         output_loss = self.output_loss(y_hat, y_bar).item()
         best_total_loss = self.l * output_loss
         best_sequence = X
+        tic = time.time()
         
-        if self.verbose:
-            print(("iter=I\tinput_loss=0\toutput_loss={:4.4}\t" + 
-                "total_loss={:4.4}").format(output_loss, best_total_loss))
-            tic = time.time()
-        
-        for i in range(self.max_iter+1):
+        for i in range(1, self.max_iter+1):
             X_hat = self(X)
             y_hat = self.model(X_hat)[:, self.target]
             
@@ -209,13 +212,21 @@ class Ledidi(torch.nn.Module):
             total_loss = input_loss + self.l * output_loss
             total_loss_ = total_loss.item()
             
-            if self.verbose and i % self.report_iter == 0:
+            if self.verbose and (i % self.report_iter == 0 or i == 1):
                 print(("iter={}\tinput_loss={:4.4}\toutput_loss={:4.4}\t" +
-                    "total_loss={:4.4}\ttime={:4.4}").format(i, 
+                    "total_loss={:4.4}\ttime={:4.4}").format(i if i != 1 else 'I', 
                         input_loss.item(), output_loss.item(), 
                         total_loss_, time.time() - tic))
-                tic = time.time()
-                      
+            
+            tic = time.time()               
+
+            if self.return_history:
+                history['edits'].append(torch.where(X_hat != X))
+                history['input_loss'].append(input_loss.item())
+                history['output_loss'].append(output_loss.item())
+                history['total_loss'].append(total_loss_)
+                
+                
             optimizer.zero_grad()
             total_loss.backward()
             optimizer.step()
@@ -224,4 +235,7 @@ class Ledidi(torch.nn.Module):
                 best_total_loss = total_loss_
                 best_sequence = torch.clone(X_hat)
 
+        if self.return_history:
+            return best_sequence, history
         return best_sequence
+        
