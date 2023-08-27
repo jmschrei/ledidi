@@ -218,7 +218,7 @@ class Ledidi(torch.nn.Module):
                         input_loss.item(), output_loss.item(), 
                         total_loss_, time.time() - tic))
             
-            tic = time.time()               
+                tic = time.time()               
 
             if self.return_history:
                 history['edits'].append(torch.where(X_hat != X))
@@ -238,4 +238,3 @@ class Ledidi(torch.nn.Module):
         if self.return_history:
             return best_sequence, history
         return best_sequence
-        
