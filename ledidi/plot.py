@@ -1,6 +1,7 @@
 # plot.py
 # Author: Jacob Schreiber <jmschreiber91@gmail.com>
 
+import numpy
 import matplotlib.pyplot as plt
 
 def plot_edits(history):
