@@ -1,6 +1,7 @@
 # pruning.py
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 
+import time
 import torch
 
 @torch.no_grad()
@@ -45,13 +46,18 @@ def greedy_pruning(model, X, X_hat, threshold=1, verbose=False):
 		reverted back to what they were in `X`.
 	"""
 
+	X_hat = torch.clone(X_hat)
+	
 	diff_idxs_ = torch.where((X != X_hat).sum(axis=1) > 0)[1]
 	diff_idxs = set([idx.item() for idx in diff_idxs_])
-
+	n, n_total = 0, len(diff_idxs)
+	
 	y_hat = model(X_hat)
 	
-	for i in range(len(diff_idxs)):
-		best_score, best_idx = float("inf"), -1    
+	
+	for i in range(n_total):
+		tic = time.time()
+		best_score, best_idx = float("inf"), -1
 
 		for idx in diff_idxs:
 			X_mod = torch.clone(X_hat)
@@ -59,7 +65,7 @@ def greedy_pruning(model, X, X_hat, threshold=1, verbose=False):
 
 			y_mod = model(X_mod)
 			score = torch.abs(y_hat - y_mod).sum()
-
+			
 			if score < best_score:
 				best_score = score
 				best_idx = idx 
@@ -67,10 +73,11 @@ def greedy_pruning(model, X, X_hat, threshold=1, verbose=False):
 		if best_score < threshold:
 			diff_idxs.remove(best_idx)
 			X_hat[0, :, best_idx] = X[0, :, best_idx]
+			n += 1
 
 			if verbose:
-				print("Pruned Index: {}, Score: {:4.4}".format(best_idx, 
-					best_score))
+				print("# Pruned: {}/{}\tPruned Index: {}\tPrediction Difference: {:4.4}\tTime: {:4.4}s".format(n, n_total, best_idx, 
+					best_score, time.time() - tic))
 
 		else:
 			break

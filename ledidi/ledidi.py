@@ -5,6 +5,38 @@
 import time
 import torch
 
+
+class DesignWrapper(torch.nn.Module):
+    """A wrapper for using multiple models in design.
+
+    This wrapper will accept multiple models and turn their predictions into a
+    vector. A requirement is that the output from each individual model is a
+    tensor whose last dimension is 1, and that all of the models have the same
+    other dimensions. For instance, if three models are passed in that each make 
+    predictions of shape (batch_size, 1), the return from this wrapper would have
+    shape (batch_size, 3).
+
+    This wrapper is used to design edits when you want to balance the predictions
+    from several models, e.g., by increasing predictions from one model without
+    changing predictions from a second model. In practice, one would now pass in
+    a vector of desired targets instead of a single value and the loss would be
+    calculated over each of them.
+
+
+    Parameters
+    ----------
+    models: list, tuple
+        A set of torch.nn.Module objects.
+    """
+
+    def __init__(self, models):
+        super(DesignWrapper, self).__init__()
+        self.models = models
+    
+    def forward(self, X):
+        return torch.cat([model(X) for model in self.models], dim=-1)
+
+
 class Ledidi(torch.nn.Module):
     """Ledidi is a method for editing categorical sequences.
 
@@ -57,12 +89,12 @@ class Ledidi(torch.nn.Module):
 
     l: float, positive, optional
         The mixing weight parameter between the input loss and the output loss,
-        applied to the output loss. The larger this value is the more important
-        it is that the output loss is minimized. Default is 100.
+        applied to the input loss. The smaller this value is the more important
+        it is that the output loss is minimized. Default is 0.01.
 
     batch_size: int, optional
         The number of sequences to generate at each step and average loss over. 
-        Default is 32.
+        Default is 64.
 
     max_iter: int, optional
         The maximum number of iterations to continue generating samples.
@@ -73,12 +105,18 @@ class Ledidi(torch.nn.Module):
         optimization. Default is 100.
 
     lr: float, optional
-        The learning rate of the procedure. Default is 1e-2.
+        The learning rate of the procedure. Default is 0.1.
 
     input_mask: torch.Tensor or None, shape=(shape[-1],)
-        A mask indicating what positions cannot be edited. This will set the
-        initial weights mask to -inf at those positions. If None, no positions
-        are masked out. Default is None.
+        A mask where 1 indicates what positions cannot be edited. This will 
+        set the initial weights mask to -inf at those positions. If None, no 
+        positions are masked out. Default is None.
+
+    initial_weights: torch.Tensor or None, shape=(1, shape[0, shape[1])
+        Initial weights to use in the weight matrix to specify priors in the
+        composition of edits that can be made. Positive values mean more likely
+        that certain edits are proposed, negative values mean less likely that
+        those edits are proposed.
 
     eps: float, optional
         The epsilon to add to the one-hot encoding. Because the first step
@@ -95,9 +133,10 @@ class Ledidi(torch.nn.Module):
     """
 
     def __init__(self, model, shape, target=None, input_loss=torch.nn.L1Loss(
-        reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=100, 
-        batch_size=32, max_iter=5000, report_iter=100, lr=1e-2, input_mask=None,
-        eps=1e-4, return_history=False, verbose=True):
+        reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=0.1, 
+        batch_size=16, max_iter=1000, early_stopping_iter=20, report_iter=100, 
+        lr=1.0, input_mask=None, initial_weights=None, eps=1e-4, 
+        return_history=False, verbose=True):
         super().__init__()
         
         for param in model.parameters():
@@ -110,6 +149,7 @@ class Ledidi(torch.nn.Module):
         self.l = l
         self.batch_size = batch_size
         self.max_iter = max_iter
+        self.early_stopping_iter = early_stopping_iter
         self.report_iter = report_iter
         self.lr = lr
         self.input_mask = input_mask
@@ -122,9 +162,15 @@ class Ledidi(torch.nn.Module):
         else:
             self.target = target
 
-        self.weights = torch.nn.Parameter(torch.zeros(1, *shape, 
-            dtype=torch.float32, requires_grad=True))
+        if initial_weights is None:
+            initial_weights = torch.zeros(1, *shape, dtype=torch.float32,
+                requires_grad=True)
+        else:
+            initial_weights.requires_grad = True
         
+        self.weights = torch.nn.Parameter(initial_weights)
+        
+
     def forward(self, X):
         """Generate a set of edits given a sequence.
 
@@ -154,6 +200,7 @@ class Ledidi(torch.nn.Module):
         return torch.nn.functional.gumbel_softmax(logits, tau=self.tau, 
             hard=True, dim=1)
         
+
     def fit_transform(self, X, y_bar):
         """Apply the Ledidi procedure to design edits for a sequence.
 
@@ -191,39 +238,56 @@ class Ledidi(torch.nn.Module):
 
         if self.input_mask is not None:
             self.weights.requires_grad = False
-            self.weights.T[self.input_mask] = float("-inf")
+            self.weights[:, :, self.input_mask] = float("-inf")
             self.weights[X.type(torch.bool)] = 0
             self.weights.requires_grad = True
         
+        n_missing = X.shape[-1] - X[0].sum()
         y_hat = self.model(X)[:, self.target]
-
-        output_loss = self.output_loss(y_hat, y_bar).item()
-        best_total_loss = self.l * output_loss
-        best_sequence = X
-        tic = time.time()
         
+        n_iter_wo_improvement = 0
+        output_loss = self.output_loss(y_hat, y_bar).item()
+
+        best_input_loss = 0.0
+        best_output_loss = output_loss
+        best_total_loss = output_loss
+        best_sequence = X
+        
+        X_ = X.expand(self.batch_size, *X.shape[1:])
+        y_bar = y_bar.expand(self.batch_size, *y_bar.shape[1:])
+        
+        tic = time.time()
+        initial_tic = time.time()
+        if self.verbose:
+            print(("iter=I\tinput_loss=0.0\toutput_loss={:4.4}\t" +
+                "total_loss={:4.4}\ttime=0.0").format(output_loss, 
+                    best_total_loss))
+
         for i in range(1, self.max_iter+1):
             X_hat = self(X)
             y_hat = self.model(X_hat)[:, self.target]
             
-            input_loss = self.input_loss(X_hat, X) / (X_hat.shape[0] * 2)
+            input_loss = self.input_loss(X_hat, X_) / (X_hat.shape[0] * 2)
+            input_loss -= n_missing / 2.
             output_loss = self.output_loss(y_hat, y_bar)
             
-            total_loss = input_loss + self.l * output_loss
+            total_loss = output_loss + self.l * input_loss
             total_loss_ = total_loss.item()
+
+            input_loss = input_loss.item()
+            output_loss = output_loss.item()
             
-            if self.verbose and (i % self.report_iter == 0 or i == 1):
+            if self.verbose and i % self.report_iter == 0:
                 print(("iter={}\tinput_loss={:4.4}\toutput_loss={:4.4}\t" +
-                    "total_loss={:4.4}\ttime={:4.4}").format(i if i != 1 else 'I', 
-                        input_loss.item(), output_loss.item(), 
-                        total_loss_, time.time() - tic))
+                    "total_loss={:4.4}\ttime={:4.4}").format(i, input_loss, 
+                        output_loss, total_loss_, time.time() - tic))
             
                 tic = time.time()               
 
             if self.return_history:
-                history['edits'].append(torch.where(X_hat != X))
-                history['input_loss'].append(input_loss.item())
-                history['output_loss'].append(output_loss.item())
+                history['edits'].append(torch.where(X_hat != X_))
+                history['input_loss'].append(input_loss)
+                history['output_loss'].append(output_loss)
                 history['total_loss'].append(total_loss_)
                 
                 
@@ -232,8 +296,21 @@ class Ledidi(torch.nn.Module):
             optimizer.step()
 
             if total_loss_ < best_total_loss:
+                best_input_loss = input_loss
+                best_output_loss = output_loss
                 best_total_loss = total_loss_
                 best_sequence = torch.clone(X_hat)
+                n_iter_wo_improvement = 0
+            else:
+                n_iter_wo_improvement += 1
+                if n_iter_wo_improvement == self.early_stopping_iter:
+                    break
+
+        if self.verbose:
+            print(("iter=F\tinput_loss={:4.4}\toutput_loss={:4.4}\t" +
+                "total_loss={:4.4}\ttime={:4.4}").format(best_input_loss, 
+                    best_output_loss, best_total_loss, 
+                    time.time() - initial_tic))
 
         if self.return_history:
             return best_sequence, history
