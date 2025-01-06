@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ledidi',
-    version='1.2.2',
+    version='2.0.0',
     author='Jacob Schreiber and Yang Lu',
     author_email='jmschreiber91@gmail.com',
     packages=['ledidi'],

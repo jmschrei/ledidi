@@ -98,7 +98,7 @@ class Ledidi(torch.nn.Module):
 
     max_iter: int, optional
         The maximum number of iterations to continue generating samples.
-        Default is 5000.
+        Default is 1000.
 
     report_iter: int optional
         The number of iterations to perform before reporting results of the
@@ -124,9 +124,8 @@ class Ledidi(torch.nn.Module):
         higher a value in the design weight needs to be achieved before
         an edit can be induced. Default is 1e-4.
 
-    return_history: bool, optional
-        Whether to return all edits made at all training steps along with
-        their losses. Default is False.
+    random_state: int or None, optional
+        Whether to force determinism.
 
     verbose: bool, optional
         Whether to print the loss during design. Default is True.
@@ -134,7 +133,7 @@ class Ledidi(torch.nn.Module):
 
     def __init__(self, model, shape, target=None, input_loss=torch.nn.L1Loss(
         reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=0.1, 
-        batch_size=16, max_iter=1000, early_stopping_iter=20, report_iter=100, 
+        batch_size=16, max_iter=1000, early_stopping_iter=100, report_iter=100, 
         lr=1.0, input_mask=None, initial_weights=None, eps=1e-4, 
         return_history=False, verbose=True):
         super().__init__()
@@ -160,7 +159,7 @@ class Ledidi(torch.nn.Module):
         if target is None:
             self.target = slice(target)
         else:
-            self.target = target
+            self.target = slice(target, target+1)
 
         if initial_weights is None:
             initial_weights = torch.zeros(1, *shape, dtype=torch.float32,
@@ -242,7 +241,7 @@ class Ledidi(torch.nn.Module):
             self.weights[X.type(torch.bool)] = 0
             self.weights.requires_grad = True
         
-        n_missing = X.shape[-1] - X[0].sum()
+        inpainting_mask = X[0].sum(dim=0) == 1
         y_hat = self.model(X)[:, self.target]
         
         n_iter_wo_improvement = 0
@@ -252,6 +251,7 @@ class Ledidi(torch.nn.Module):
         best_output_loss = output_loss
         best_total_loss = output_loss
         best_sequence = X
+        best_weights = torch.clone(self.weights)
         
         X_ = X.expand(self.batch_size, *X.shape[1:])
         y_bar = y_bar.expand(self.batch_size, *y_bar.shape[1:])
@@ -267,20 +267,22 @@ class Ledidi(torch.nn.Module):
             X_hat = self(X)
             y_hat = self.model(X_hat)[:, self.target]
             
-            input_loss = self.input_loss(X_hat, X_) / (X_hat.shape[0] * 2)
-            input_loss -= n_missing / 2.
+            input_loss = self.input_loss(X_hat[:, :, inpainting_mask], X_[:, :, inpainting_mask]) / (X_hat.shape[0] * 2)
             output_loss = self.output_loss(y_hat, y_bar)
-            
             total_loss = output_loss + self.l * input_loss
-            total_loss_ = total_loss.item()
+
+            optimizer.zero_grad()
+            total_loss.backward()
+            optimizer.step()
 
             input_loss = input_loss.item()
             output_loss = output_loss.item()
+            total_loss = total_loss.item()
             
             if self.verbose and i % self.report_iter == 0:
                 print(("iter={}\tinput_loss={:4.4}\toutput_loss={:4.4}\t" +
                     "total_loss={:4.4}\ttime={:4.4}").format(i, input_loss, 
-                        output_loss, total_loss_, time.time() - tic))
+                        output_loss, total_loss, time.time() - tic))
             
                 tic = time.time()               
 
@@ -288,23 +290,24 @@ class Ledidi(torch.nn.Module):
                 history['edits'].append(torch.where(X_hat != X_))
                 history['input_loss'].append(input_loss)
                 history['output_loss'].append(output_loss)
-                history['total_loss'].append(total_loss_)
-                
-                
-            optimizer.zero_grad()
-            total_loss.backward()
-            optimizer.step()
+                history['total_loss'].append(total_loss)
 
-            if total_loss_ < best_total_loss:
+            if total_loss < best_total_loss:
                 best_input_loss = input_loss
                 best_output_loss = output_loss
-                best_total_loss = total_loss_
+                best_total_loss = total_loss
+
                 best_sequence = torch.clone(X_hat)
+                best_weights = torch.clone(self.weights)
+
                 n_iter_wo_improvement = 0
             else:
                 n_iter_wo_improvement += 1
                 if n_iter_wo_improvement == self.early_stopping_iter:
                     break
+
+        optimizer.zero_grad()
+        self.weights = torch.nn.Parameter(best_weights)
 
         if self.verbose:
             print(("iter=F\tinput_loss={:4.4}\toutput_loss={:4.4}\t" +

@@ -5,7 +5,7 @@ import time
 import torch
 
 @torch.no_grad()
-def greedy_pruning(model, X, X_hat, threshold=1, verbose=False):
+def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 	"""A method for pruning edits to remove those that are irrelevant.
 
 	This method will greedily go through all of the proposed edits and evaluate
@@ -36,6 +36,11 @@ def greedy_pruning(model, X, X_hat, threshold=1, verbose=False):
 		A threshold on the maximum change in model output that removing an edit
 		can have. Default is 1.
 
+	target: int or None
+		When given a multi-task model, the target to slice out and feed into
+		output_loss when calculating the gradient. If None, perform no slicing.
+		Default is None.
+
 	verbose: bool, optional
 		Whether to print out the index and delta at each iteration.
 
@@ -46,13 +51,19 @@ def greedy_pruning(model, X, X_hat, threshold=1, verbose=False):
 		reverted back to what they were in `X`.
 	"""
 
+	model = model.eval()
 	X_hat = torch.clone(X_hat)
 	
 	diff_idxs_ = torch.where((X != X_hat).sum(axis=1) > 0)[1]
 	diff_idxs = set([idx.item() for idx in diff_idxs_])
 	n, n_total = 0, len(diff_idxs)
 	
-	y_hat = model(X_hat)
+	if target is None:
+		target = slice(target)
+	else:
+		target = slice(target, target+1)
+	
+	y_hat = model(X_hat)[:, target]
 	
 	
 	for i in range(n_total):
@@ -63,7 +74,7 @@ def greedy_pruning(model, X, X_hat, threshold=1, verbose=False):
 			X_mod = torch.clone(X_hat)
 			X_mod[0, :, idx] = X[0, :, idx]
 
-			y_mod = model(X_mod)
+			y_mod = model(X_mod)[:, target]
 			score = torch.abs(y_hat - y_mod).sum()
 			
 			if score < best_score:

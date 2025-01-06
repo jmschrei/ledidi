@@ -31,7 +31,6 @@ def plot_edits(history):
 	ylim = len(history['edits']*b)
 	yticks = numpy.array(ax.get_yticks())
 	
-	plt.xlim(0, X.shape[-1])
 	plt.yticks(yticks, yticks // b)
 	plt.ylim(ylim, 0)
 	plt.xlabel("Position", fontsize=12)
