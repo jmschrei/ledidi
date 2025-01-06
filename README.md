@@ -2,6 +2,8 @@
 
 [![PyPI Downloads](https://static.pepy.tech/badge/ledidi)](https://pepy.tech/projects/ledidi)
 
+![image](https://github.com/user-attachments/assets/41ffe180-8171-4f28-a88e-41cc1c79985a)
+
 > **Note**:
 > ledidi has recently been rewritten in PyTorch. Please see the tutorials folder for examples on how to use the current version with your PyTorch models. Unfortunately, ledidi no longer supports TensorFlow models. 
 
