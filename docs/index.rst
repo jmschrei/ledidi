@@ -1,4 +1,4 @@
-.. tangermeme documentation master file, created by
+.. ledidi documentation master file, created by
    sphinx-quickstart on Tue Feb 20 13:46:59 2024.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -38,7 +38,7 @@ Installation
    :hidden:
    :caption: Operations
 
-   tutorials/Tutorial_A1_Ersatz_Sequence_Manipulation.ipynb
+   ..tutorials/Tutorial_A1_Ersatz_Sequence_Manipulation.ipynb
 
 
 .. toctree::
@@ -46,7 +46,7 @@ Installation
    :hidden:
    :caption: Vignettes
 
-   vignettes/Attribution_Trickiness_and_DeepLiftShap_Implementations.ipynb
+   ..vignettes/Attribution_Trickiness_and_DeepLiftShap_Implementations.ipynb
 
 
 .. toctree::
@@ -54,5 +54,7 @@ Installation
    :hidden:
    :caption: API
 
-   api/ablate.rst
+   api/ledidi.rst
+   api/pruning.rst
+   api/plot.rst
 
