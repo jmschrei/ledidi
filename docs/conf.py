@@ -17,12 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'tangermeme'
-copyright = '2024, Jacob Schreiber'
+project = 'ledidi'
+copyright = '2025, Jacob Schreiber'
 author = 'Jacob Schreiber'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.1.0'
+release = 'v2.0.0'
 
 
 # -- General configuration ---------------------------------------------------
