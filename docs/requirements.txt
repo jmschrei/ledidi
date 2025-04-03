@@ -1,0 +1,6 @@
+torch >= 1.9.0
+matplotlib
+sphinx-rtd-theme
+pandoc
+nbsphinx
+jinja2==3.1.3

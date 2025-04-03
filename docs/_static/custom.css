@@ -1,0 +1,13 @@
+/* Sidebar header (and top-bar for mobile) */
+.wy-side-nav-search, .wy-nav-top {
+    background: #ED776F;
+}
+
+.wy-menu > .caption > span.caption-text {
+  color: #ED776F;
+}
+
+code.literal {
+    color: #ED776F !important;
+    background-color: #fbfbfb !important;
+}
