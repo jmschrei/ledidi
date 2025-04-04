@@ -3,4 +3,5 @@
 
 __version__ = '2.0.0'
 
+from .ledidi import ledidi
 from .ledidi import Ledidi

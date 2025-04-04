@@ -6,39 +6,165 @@ import time
 import torch
 
 
-class DesignWrapper(torch.nn.Module):
-    """A wrapper for using multiple models in design.
+def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
+	device='cuda', **kwargs):
+	"""Ledidi is a method for editing sequences to exhibit desired properties.
+	
+	Ledidi is a method for designing compact sets of edits to categorical
+	sequences, such as DNA, to make them exhibit desired characteristics as
+	predicted by an oracle model. This is done by rephrasing the edit design task
+	as a continuous optimization problem that can be solved using off-the-shelf
+	optimizers and strategies. In this problem, Ledidi is trying to minimize an
+	objective function comprised of an output loss, which measures how far away
+	predictions on the edited sequence are from the target predictions, and the
+	input loss, which measures the number of edits.
 
-    This wrapper will accept multiple models and turn their predictions into a
-    vector. A requirement is that the output from each individual model is a
-    tensor whose last dimension is 1, and that all of the models have the same
-    other dimensions. For instance, if three models are passed in that each make 
-    predictions of shape (batch_size, 1), the return from this wrapper would have
-    shape (batch_size, 3).
+	Because gradients cannot be directly applied to one-hot encoded categorical
+	sequences, Ledidi learns an underlying continuous weight matrix from which
+	categorical sequences are sampled. The distribution used for sampling is the
+	Gumbel-softmax distribution and this is referred to as the straight-through
+	estimator. Essentially, the process allows us the flexibility of a simple
+	continuous optimization problem and the consistency of still sampling one-hot
+	encoded sequences to run through the oracle model.
 
-    This wrapper is used to design edits when you want to balance the predictions
-    from several models, e.g., by increasing predictions from one model without
-    changing predictions from a second model. In practice, one would now pass in
-    a vector of desired targets instead of a single value and the loss would be
-    calculated over each of them.
+	The oracle model can bd a single task from a single model, multiple tasks
+	from the same model, or even multiple tasks from multiple models. All that
+	matters is that the entire thing is differentiable. PyTorch makes the use of
+	multiple tasks/models easy through the use of wrappers. See
+	
+		https://tangermeme.readthedocs.io/en/latest/vignettes/Wrappers_are_Productivity_Hacks.html
+	
+	for more information on how to construct wrappers that may be helpful.
+	
+	This function is a wrapper around the Ledidi class, which must inherit from
+	torch.nn.Module because a torch.nn.Parameter must be initialized for the 
+	weight matrix, and a call to `Ledidi.fit_transform`. Basically, this wrapper 
+	turns the two line implementation into a one line one that is consistent with
+	other design implementations.
+	
+	Additionally, one can design an affinity catalog by passing in a list of
+	target values in `y_bar` instead of a single value. When a list is provided,
+	an additional dimension is added to the front of the returned tensor of
+	designed sequences. 
+	
+	
+	If one wants to perform design multiple times they can set `n_repeats` to a
+	value above 1. The initial weight matrix will be zero but different samples
+	will be drawn from the Gumbel-softmax distribution, potentially leading to
+	different outcomes.
+	
+	Finally, by default one batch of designed sequences is returned. If you would
+	like more than one batch of samples returned, you can specify the number of
+	samples drawn from Ledidi's learned distributions. 
+	
+	
+	Parameters
+	----------
+	model: torch.nn.Module
+		A model to use as an oracle that will be frozen as a part of the Ledidi
+		procedure.
+	
+	X: torch.Tensor, shape=(1, n_channels, length)
+		A tensor containing a single one-hot encoded sequence to propose edits for. 
+		This sequence is then expanded out to the desired batch size to generate a 
+		batch of edits.
 
-
-    Parameters
-    ----------
-    models: list, tuple
-        A set of torch.nn.Module objects.
-    """
-
-    def __init__(self, models):
-        super(DesignWrapper, self).__init__()
-        self.models = models
-    
-    def forward(self, X):
-        return torch.cat([model(X) for model in self.models], dim=-1)
+	y_bar: torch.Tensor or list, shape=(1, *)
+		The desired output from the model. Any shape for this tensor is permissable
+		so long as the `output_loss` function can handle comparing it to the output 
+		from the given model. If a list is provided then each item in the list must
+		have those properties.
+	
+	n_repeats: int, optional
+		The number of times to run the Ledidi procedure. If 1, do not include this
+		as a dimension in the returned blob of sequences. If above 1, include this
+		as the first or second dimension, depending on whether an affinity catalog
+		is being designed (second if so, first if not). Default is 1.
+	
+	n_samples: int or None, optional
+		The number of samples to draw from Ledidi after the optimization process.
+		If None, draw one batch as defined by `batch_size`. Otherwise, draw the
+		number of sequences specified.
+	
+	return_designer: bool, optional
+		Whether to return the designers for each design setting. If multiple
+		repeats are done, each designer will be returned. Orthogonally, if
+		an affinity catalog is being designed, return designers for each step.
+		Default is False.
+	
+	device: str or torch.device, optional
+		The device to move all the tensors and models to as a convenience. Default
+		is 'cuda'.
+	
+	**kwargs
+		Any additional arguments to be passed into the Ledidi object.
+	
+	
+	Returns
+	-------
+	y: torch.Tensor, shape=(*ny, *n_repeats, n_sample, n_channels, length)
+		A tensor containing a batch of one-hot encoded sequences which may contain 
+		one or more edits compared to the sequence that was passed in. If a list of
+		`y_bar` values has been passed in, indicating that one would like to design
+		an affinity catalog, that becomes the first dimension. If multiple repeats
+		are being done, prepend that as well as either the first dimension, if no
+		affinity catalog is being designed, or the second dimension, if the catalog
+		is being designed.
+	"""
+	
+	if not isinstance(n_repeats, int) or n_repeats <= 0:
+		raise ValueError("n_repeats must be a positive integer, not `{}`".format(
+			n_repeats))
+	
+	if n_samples is not None and (not isinstance(n_samples, int) or n_samples <= 0):
+		raise ValueError("n_samples must be a positive integer, not `{}`".format(
+			n_samples))
+	
+	if not isinstance(y_bar, list):
+		y_bar = [y_bar]
+	
+	ny = len(y_bar)
+	
+	X = X.to(device)
+	X_bar = [[] for i in range(ny)]
+	designers = [[] for i in range(ny)]
+	
+	for i, y_bar_i in enumerate(y_bar):
+		y_bar_i = y_bar_i.to(device)
+		
+		for j in range(n_repeats):
+			designer = Ledidi(model, shape=X.shape[-2:], **kwargs).to(device)
+			designer.fit_transform(X, y_bar_i)
+			designers[i].append(designer)
+			
+			if n_samples is None:
+				n_iter = 1
+			else:
+				n_iter = n_samples // designer.batch_size + 1
+			
+			X_bar_ = torch.cat([designer(X) for _ in range(n_iter)], dim=0)[:n_samples]
+			X_bar[i].append(X_bar_)
+		
+		X_bar[i] = torch.stack(X_bar[i])
+	
+	X_bar = torch.stack(X_bar)
+	
+	if n_repeats == 1:
+		X_bar = X_bar[:, 0]
+		designers = [d[0] for d in designers]
+	
+	if len(y_bar) == 1:
+		X_bar = X_bar[0]
+		designers = designers[0]
+	
+	if return_designer:
+		return X_bar, designers
+	
+	return X_bar 
 
 
 class Ledidi(torch.nn.Module):
-    """Ledidi is a method for editing categorical sequences.
+    """Ledidi is a method for editing sequences to exhibit desired properties.
 
     Ledidi is a method for editing categorical sequences, such as those
     comprised of nucleotides or amino acids, to exhibit desired properties in
