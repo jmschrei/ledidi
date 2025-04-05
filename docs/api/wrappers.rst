@@ -1,5 +1,5 @@
 wrappers
 ========
 
-.. automodule:: ledidi.losses
-	:members: MinGap
+.. automodule:: ledidi.wrappers
+	:members: DesignWrapper
