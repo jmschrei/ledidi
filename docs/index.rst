@@ -60,5 +60,5 @@ Installation
    api/pruning.rst
    api/plot.rst
    api/losses.rst
-   api/wrapper.rst
+   api/wrappers.rst
 
