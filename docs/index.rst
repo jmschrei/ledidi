@@ -40,20 +40,15 @@ Installation
    self
    whats_new.rst
 
+
 .. toctree::
    :maxdepth: 1
    :hidden:
    :caption: Tutorials
 
-   ..tutorials/Tutorial_1_-_Design_of_Protein_Binding_Sites
+   ..tutorials/Tutorial_1_-_Design_of_Protein_Binding_Sites.ipynb
+   ..tutorials/Tutorial_2_-_Constraints_and_Priors.ipynb
 
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-   :caption: Vignettes
-
-   ..vignettes/Attribution_Trickiness_and_DeepLiftShap_Implementations.ipynb
 
 
 .. toctree::
