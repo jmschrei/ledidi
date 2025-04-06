@@ -2,7 +2,7 @@
 
 [![PyPI Downloads](https://static.pepy.tech/badge/Ledidi)](https://pepy.tech/projects/Ledidi)
 
-![image](https://github.com/user-attachments/assets/41ffe180-8171-4f28-a88e-41cc1c79985a)
+<img src="https://github.com/user-attachments/assets/500e5f18-f9af-4cc9-b76c-23296d60640d" width="50%" height="50%">
 
 > **Note**:
 > Ledidi has recently been rewritten in PyTorch. Please see the tutorials folder for examples on how to use the current version with your PyTorch models. Unfortunately, Ledidi no longer supports TensorFlow models. 
@@ -12,6 +12,8 @@ Ledidi is an approach for designing edits to biological sequences that induce de
 A challenge with designing edits for categorical sequences (e.g., DNA sequences with four possible nucleotides) is that the inputs are usually one-hot encoded but gradients are continuous. Applying the gradients directly would yield oddities like 1.2 of an A and -0.3 of a G. These values yield two problems: (1) such values are not biologically meaningful as you cannot design a sequence that is "1.2 A and -0.3 G" and (2) because most machine learning models have been trained on one-hot encoded data and are calibrated for that distribution, such sequences would likely confuse the model, push it off the training data manifold, and result in anomalous sequences even if one managed to turn the output back into a valid sequence.
 
 Ledidi resolves this challenge by phrasing edit design as an optimization problem over a continuous weight matrix `W` that gradients *can* be directly applied to. Specifically, at each iteration, Ledidi draws one-hot encoded sequences one position at a time from a Gumbel-softmax distribution defined by `log(X + eps) + W` where `X` is the original one-hot encoded sequence and `eps` is a small value. When the drawn character is different from the character in `X`, likely because `W` has been updated at that position to prefer another character, an "edit" is being made. These edited sequences are then passed through the frozen pre-trained model and the output is compared to the desired output. The total loss is then derived from this output loss as well as an input loss that is the count of proposed edits, limiting the number that Ledidi will propose. A gradient is calculated from this loss and `W` is updated, keeping `X` unchanged.
+
+![image](https://github.com/user-attachments/assets/41ffe180-8171-4f28-a88e-41cc1c79985a)
 
 Although our examples right now are largely nucleotide sequence-based, one can also apply Ledidi out-of-the-box to RNA or protein models (or really, to any model with a sequence of categorical inputs such as small molecules). The only limitation is what will fit in your GPU or what you are willing to wait for on your CPU!
 
