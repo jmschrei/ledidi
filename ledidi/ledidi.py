@@ -134,15 +134,13 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 		
 		for j in range(n_repeats):
 			designer = Ledidi(model, shape=X.shape[-2:], **kwargs).to(device)
-			designer.fit_transform(X, y_bar_i)
+			X_bar_ = designer.fit_transform(X, y_bar_i)
 			designers[i].append(designer)
 			
-			if n_samples is None:
-				n_iter = 1
-			else:
+			if n_samples is not None:
 				n_iter = n_samples // designer.batch_size + 1
+				X_bar_ = torch.cat([designer(X) for _ in range(n_iter)], dim=0)[:n_samples]
 			
-			X_bar_ = torch.cat([designer(X) for _ in range(n_iter)], dim=0)[:n_samples]
 			X_bar[i].append(X_bar_)
 		
 		X_bar[i] = torch.stack(X_bar[i])

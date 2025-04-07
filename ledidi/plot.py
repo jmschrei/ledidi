@@ -58,9 +58,10 @@ def plot_edits(X_orig, X_attrs, colors='darkorange', **kwargs):
 		Attributions for the initial unedited sequence. Attributions should only be
 		non-zero for the observed character.
 	
-	X_attrs: torch.Tensor, shape=(n, 4, len)
+	X_attrs: torch.Tensor or list, shape=(n, 4, len)
 		Attributions for `n` edited sequences, with values only being non-zero for
-		the observed character.
+		the observed character. If a list is provided, it is concatenated to form
+		such a tensor.
 	
 	colors: str or list, optional
 		What color to use for the edited characters. If a list is provided, should be
@@ -70,6 +71,9 @@ def plot_edits(X_orig, X_attrs, colors='darkorange', **kwargs):
 	**kwargs: args, optional
 		Any additional arguments to pass into plt.figure.
 	"""
+	
+	if isinstance(X_attrs, list):
+		X_attrs = torch.cat(X_attrs, dim=0)
 	
 	X_attrs = torch.cat([X_orig, X_attrs], dim=0)
 	X_attrs = X_attrs.numpy(force=True)
