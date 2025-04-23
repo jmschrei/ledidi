@@ -4,6 +4,8 @@
 
 <img src="https://github.com/user-attachments/assets/500e5f18-f9af-4cc9-b76c-23296d60640d" width="50%" height="50%">
 
+[[preprint](https://www.biorxiv.org/content/10.1101/2025.04.22.650035v1)][[docs](https://ledidi.readthedocs.io/en/latest/)]
+
 > **Note**:
 > Ledidi has recently been rewritten in PyTorch. Please see the tutorials folder for examples on how to use the current version with your PyTorch models. Unfortunately, Ledidi no longer supports TensorFlow models. 
 
