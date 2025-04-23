@@ -19,10 +19,8 @@ Ledidi resolves this challenge by phrasing edit design as an optimization proble
 
 Although our examples right now are largely nucleotide sequence-based, one can also apply Ledidi out-of-the-box to RNA or protein models (or really, to any model with a sequence of categorical inputs such as small molecules). The only limitation is what will fit in your GPU or what you are willing to wait for on your CPU!
 
-Take a look at our [preprint](https://www.biorxiv.org/content/10.1101/2020.05.21.109686v1)!
-
 ### Installation
-`pip install Ledidi`
+`pip install ledidi`
 
 ### Usage
 
