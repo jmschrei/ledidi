@@ -7,7 +7,7 @@ import torch
 
 
 def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
-	device='cuda', **kwargs):
+	return_history=False, device='cuda', **kwargs):
 	"""Ledidi is a method for editing sequences to exhibit desired properties.
 	
 	Ledidi is a method for designing compact sets of edits to categorical
@@ -92,6 +92,10 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 		an affinity catalog is being designed, return designers for each step.
 		Default is False.
 	
+	return_history: bool, optional
+		Whether to return a history for each run of Ledidi. This history includes
+		each loss and other statistics. Default is False.
+	
 	device: str or torch.device, optional
 		The device to move all the tensors and models to as a convenience. Default
 		is 'cuda'.
@@ -128,13 +132,20 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 	X = X.to(device)
 	X_bar = [[] for i in range(ny)]
 	designers = [[] for i in range(ny)]
+	histories = [[] for i in range(ny)]
 	
 	for i, y_bar_i in enumerate(y_bar):
 		y_bar_i = y_bar_i.to(device)
 		
 		for j in range(n_repeats):
-			designer = Ledidi(model, shape=X.shape[-2:], **kwargs).to(device)
+			designer = Ledidi(model, shape=X.shape[-2:], return_history=return_history, 
+				**kwargs).to(device)
 			X_bar_ = designer.fit_transform(X, y_bar_i)
+			
+			if return_history:
+				X_bar_, history = X_bar_
+				histories[i].append(history)
+			
 			designers[i].append(designer)
 			
 			if n_samples is not None:
@@ -150,15 +161,22 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 	if n_repeats == 1:
 		X_bar = X_bar[:, 0]
 		designers = [d[0] for d in designers]
+		histories = None if not return_history else [h[0] for h in histories]
 	
 	if len(y_bar) == 1:
 		X_bar = X_bar[0]
 		designers = designers[0]
+		histories = None if not return_history else histories[0]
+	
+	ledidi_output = [X_bar]
 	
 	if return_designer:
-		return X_bar, designers
+		ledidi_output.append(designers)
 	
-	return X_bar 
+	if return_history:
+		ledidi_output.append(histories)
+	
+	return ledidi_output[0] if len(ledidi_output) == 1 else ledidi_output
 
 
 class Ledidi(torch.nn.Module):
