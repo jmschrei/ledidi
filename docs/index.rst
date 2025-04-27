@@ -49,6 +49,8 @@ Installation
    tutorials/Tutorial_1_-_Design_of_Protein_Binding_Sites.ipynb
    tutorials/Tutorial_2_-_Constraints_and_Priors.ipynb
    tutorials/Tutorial_3_-_In-Painting.ipynb
+   tutorials/Tutorial_4_-_Multiple_Models.ipynb
+   tutorials/Tutorial_5_-_Affinity_Catalogs.ipynb
 
 
 
