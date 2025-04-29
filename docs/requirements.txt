@@ -3,4 +3,4 @@ matplotlib
 sphinx-rtd-theme
 pandoc
 nbsphinx
-jinja2==3.1.3
+jinja2==3.1.6
