@@ -51,6 +51,7 @@ Installation
    tutorials/Tutorial_3_-_In-Painting.ipynb
    tutorials/Tutorial_4_-_Multiple_Models.ipynb
    tutorials/Tutorial_5_-_Affinity_Catalogs.ipynb
+   tutorials/Tutorial_6_-_Custom_Loss_Functions.ipynb
 
 
 
