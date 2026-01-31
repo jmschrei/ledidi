@@ -4,9 +4,6 @@
 
 <img src="https://github.com/user-attachments/assets/500e5f18-f9af-4cc9-b76c-23296d60640d" width="40%" height="40%">
 
-> **Note**:
-> Ledidi has recently been rewritten in PyTorch. Please see the tutorials folder for examples on how to use the current version with your PyTorch models. Unfortunately, Ledidi no longer supports TensorFlow models. 
-
 [[preprint](https://www.biorxiv.org/content/10.1101/2025.04.22.650035v1)][[docs](https://ledidi.readthedocs.io/en/latest/)]
 
 Ledidi is an approach for designing edits to biological sequences that induce desired properties. It does this by inverting the normal way that one thinks about machine learning models: normally during training, the data is held constant and model weights are updated; here, Ledidi holds the model constant and updates the *data*. When using Ledidi, the data are the sequences that are being edited and the "updates" to these sequences are the edits. Using this simple paradigm, Ledidi *turns any trained machine learning model into a biological sequence editor*, regardless of the original purpose of the model. 
@@ -25,6 +22,8 @@ Although our examples right now are largely nucleotide sequence-based, one can a
 
 ### Installation
 `pip install ledidi`
+
+If you already have PyTorch installed, this should take less than a minute. Otherwise, it may take several minutes, of which most of the time is spent installing PyTorch.
 
 ### Usage
 
