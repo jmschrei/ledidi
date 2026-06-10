@@ -74,6 +74,32 @@ print("TGACTCA" in designed)  # True -- Ledidi inserted the motif in just a coup
 
 Ledidi finds the cheapest place to introduce the motif and edits only the positions it needs to, rather than overwriting a whole stretch of sequence.
 
+### Input and output format
+
+Ledidi works with one-hot encoded sequences as `torch.float32` tensors of shape `(1, n_channels, length)` — for DNA that is `(1, 4, length)`, with channels ordered `A, C, G, T`. The returned `X_hat` has shape `(batch_size, n_channels, length)`: a batch of independently sampled designed sequences (`batch_size` defaults to 16).
+
+If you are starting from a string, you can one-hot encode it and decode the result directly:
+
+```python
+import torch
+
+def one_hot_encode(seq):
+	mapping = {"A": 0, "C": 1, "G": 2, "T": 3}
+	X = torch.zeros(1, 4, len(seq))
+	for i, char in enumerate(seq):
+		X[0, mapping[char], i] = 1.0
+	return X
+
+def decode(X):  # X is a single (4, length) one-hot sequence
+	return "".join("ACGT"[c] for c in X.argmax(dim=0))
+
+X = one_hot_encode("ACGTACGTACGT")
+# ... run Ledidi to get X_hat ...
+# decode(X_hat[0]) turns the first designed sequence back into a string
+```
+
+The sibling library [tangermeme](https://github.com/jmschrei/tangermeme) provides `one_hot_encode` and `characters` utilities that handle this (and reading FASTA/loci) for you.
+
 ### Usage
 
 Please see the [documentation site](https://ledidi.readthedocs.io/en/latest/) for more complete tutorials on how to use Ledidi. You can find some example BPNet models -- including the one used in the tutorials -- at https://zenodo.org/records/14604495.
