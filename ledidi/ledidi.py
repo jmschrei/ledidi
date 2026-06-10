@@ -6,8 +6,57 @@ import time
 import torch
 
 
+def _gumbel_softmax_hard(logits, tau, dim, generator):
+	"""Draw a hard Gumbel-softmax sample using an explicit generator.
+
+	This is a drop-in reimplementation of the `hard=True` branch of
+	`torch.nn.functional.gumbel_softmax` whose sole purpose is to route the
+	randomness through an explicit `torch.Generator`. The reference
+	implementation draws its Gumbel noise from the global torch RNG, which
+	cannot be seeded without mutating global state and thereby perturbing the
+	rest of the caller's script. The only stochastic operation is the
+	`exponential_` draw, which does accept a `generator` argument, so the
+	remainder of the computation is reproduced verbatim to remain numerically
+	identical to the reference function for a given noise draw.
+
+
+	Parameters
+	----------
+	logits: torch.Tensor
+		The unnormalized log-probabilities that the Gumbel noise is added to.
+
+	tau: float
+		The temperature of the Gumbel-softmax distribution.
+
+	dim: int
+		The dimension along which the softmax and one-hot argmax are computed.
+
+	generator: torch.Generator
+		The generator supplying the Gumbel noise, isolating this draw from the
+		global torch RNG.
+
+
+	Returns
+	-------
+	y: torch.Tensor
+		A tensor the same shape as `logits` that is one-hot along `dim` in the
+		forward pass but carries the soft gradients via the straight-through
+		estimator.
+	"""
+
+	gumbels = -torch.empty_like(logits, memory_format=torch.legacy_contiguous_format
+		).exponential_(generator=generator).log()
+	gumbels = (logits + gumbels) / tau
+	y_soft = gumbels.softmax(dim)
+
+	index = y_soft.max(dim, keepdim=True)[1]
+	y_hard = torch.zeros_like(logits, memory_format=torch.legacy_contiguous_format
+		).scatter_(dim, index, 1.0)
+	return y_hard - y_soft.detach() + y_soft
+
+
 def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
-	return_history=False, device='cuda', **kwargs):
+	return_history=False, device='cuda', random_state=None, **kwargs):
 	"""Ledidi is a method for editing sequences to exhibit desired properties.
 	
 	Ledidi is a method for designing compact sets of edits to categorical
@@ -99,7 +148,15 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 	device: str or torch.device, optional
 		The device to move all the tensors and models to as a convenience. Default
 		is 'cuda'.
-	
+
+	random_state: int or None, optional
+		A seed for the Gumbel-softmax sampling that makes the design procedure
+		reproducible without mutating the global torch RNG. When None, sampling
+		is drawn from the global RNG as usual. When an integer, each designer is
+		seeded with a distinct offset of this value so that the affinity catalog
+		entries and repeats remain independent of one another while still being
+		reproducible. Default is None.
+
 	**kwargs
 		Any additional arguments to be passed into the Ledidi object.
 	
@@ -138,8 +195,9 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 		y_bar_i = y_bar_i.to(device)
 		
 		for j in range(n_repeats):
-			designer = Ledidi(model, shape=X.shape[-2:], return_history=return_history, 
-				**kwargs).to(device)
+			rs = None if random_state is None else random_state + i * n_repeats + j
+			designer = Ledidi(model, shape=X.shape[-2:], return_history=return_history,
+				random_state=rs, **kwargs).to(device)
 			X_bar_ = designer.fit_transform(X, y_bar_i)
 			
 			if return_history:
@@ -278,13 +336,23 @@ class Ledidi(torch.nn.Module):
 
     verbose: bool, optional
         Whether to print the loss during design. Default is True.
+
+    random_state: int or None, optional
+        A seed for the Gumbel-softmax sampling in `forward`. When None, samples
+        are drawn from the global torch RNG exactly as before. When an integer,
+        samples are instead drawn from a dedicated `torch.Generator` seeded with
+        this value, making the procedure reproducible without mutating the
+        global RNG and thereby leaving the rest of the caller's script
+        unaffected. The generator advances with each call, so successive samples
+        and successive optimization steps still differ from one another while
+        remaining reproducible as a whole. Default is None.
     """
 
     def __init__(self, model, shape, target=None, input_loss=torch.nn.L1Loss(
-        reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=0.1, 
-        batch_size=16, max_iter=1000, early_stopping_iter=100, report_iter=100, 
-        lr=1.0, input_mask=None, initial_weights=None, eps=1e-4, 
-        return_history=False, verbose=True):
+        reduction='sum'), output_loss=torch.nn.MSELoss(), tau=1, l=0.1,
+        batch_size=16, max_iter=1000, early_stopping_iter=100, report_iter=100,
+        lr=1.0, input_mask=None, initial_weights=None, eps=1e-4,
+        return_history=False, verbose=True, random_state=None):
         super().__init__()
         
         for param in model.parameters():
@@ -304,6 +372,8 @@ class Ledidi(torch.nn.Module):
         self.eps = eps
         self.return_history = return_history
         self.verbose = verbose
+        self.random_state = random_state
+        self._generator = None
 
         if target is None:
             self.target = slice(target)
@@ -345,8 +415,16 @@ class Ledidi(torch.nn.Module):
 
         logits = torch.log(X + self.eps) + self.weights
         logits = logits.expand(self.batch_size, *(-1 for i in range(X.ndim-1)))
-        return torch.nn.functional.gumbel_softmax(logits, tau=self.tau, 
-            hard=True, dim=1)
+
+        if self.random_state is None:
+            return torch.nn.functional.gumbel_softmax(logits, tau=self.tau,
+                hard=True, dim=1)
+
+        if self._generator is None or self._generator.device != logits.device:
+            self._generator = torch.Generator(device=logits.device)
+            self._generator.manual_seed(self.random_state)
+
+        return _gumbel_softmax_hard(logits, self.tau, 1, self._generator)
         
 
     def fit_transform(self, X, y_bar):
@@ -396,13 +474,13 @@ class Ledidi(torch.nn.Module):
         n_iter_wo_improvement = 0
         output_loss = self.output_loss(y_hat, y_bar).item()
 
+        X_ = X.expand(self.batch_size, *X.shape[1:])
+
         best_input_loss = 0.0
         best_output_loss = output_loss
         best_total_loss = output_loss
-        best_sequence = X
+        best_sequence = X_
         best_weights = torch.clone(self.weights)
-        
-        X_ = X.expand(self.batch_size, *X.shape[1:])
         y_bar = y_bar.expand(self.batch_size, *y_bar.shape[1:])
         
         tic = time.time()

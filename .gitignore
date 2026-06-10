@@ -1,5 +1,8 @@
 claude_comments/
 
+# Standalone gumbel-softmax equivalence verification script
+verify_gumbel.py
+
 # Python
 __pycache__/
 *.py[cod]

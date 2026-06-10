@@ -21,6 +21,11 @@ dependencies = [
     "logomaker",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
 [project.urls]
 Homepage = "https://github.com/jmschrei/ledidi"
 Documentation = "https://ledidi.readthedocs.io/en/latest/"
