@@ -38,6 +38,42 @@ cd ledidi
 uv pip install -e .
 ```
 
+### Quickstart
+
+Here is a complete, runnable example that uses a tiny parameter-free oracle, so there is nothing to download. The oracle scores how well a sequence matches the AP-1 motif `TGACTCA`, and Ledidi designs the edits that maximize that score.
+
+```python
+import torch
+from ledidi import ledidi
+
+# A toy oracle: it slides the AP-1 motif TGACTCA across the sequence and returns
+# the best match (a perfect match scores 7). Any differentiable torch model that
+# takes a one-hot sequence and returns a prediction can be used in its place.
+motif = "TGACTCA"
+weights = torch.zeros(1, 4, len(motif))
+for i, char in enumerate(motif):
+	weights[0, "ACGT".index(char), i] = 1.0
+
+class MotifScore(torch.nn.Module):
+	def forward(self, X):
+		return torch.nn.functional.conv1d(X, weights).amax(dim=-1)
+
+# A random one-hot starting sequence of shape (1, 4, length).
+torch.manual_seed(0)
+idxs = torch.randint(0, 4, (1, 50))
+X = torch.zeros(1, 4, 50).scatter_(1, idxs.unsqueeze(1), 1.0)
+
+# Ask Ledidi for edits that make the oracle output a perfect match (7).
+y_bar = torch.tensor([[7.0]])
+X_hat = ledidi(MotifScore(), X, y_bar, device="cpu", random_state=0, verbose=False)
+
+# X_hat has shape (batch_size, 4, length); decode the first designed sequence.
+designed = "".join("ACGT"[c] for c in X_hat[0].argmax(dim=0))
+print("TGACTCA" in designed)  # True -- Ledidi inserted the motif in just a couple of edits
+```
+
+Ledidi finds the cheapest place to introduce the motif and edits only the positions it needs to, rather than overwriting a whole stretch of sequence.
+
 ### Usage
 
 Please see the [documentation site](https://ledidi.readthedocs.io/en/latest/) for more complete tutorials on how to use Ledidi. You can find some example BPNet models -- including the one used in the tutorials -- at https://zenodo.org/records/14604495.
