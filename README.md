@@ -100,6 +100,14 @@ X = one_hot_encode("ACGTACGTACGT")
 
 The sibling library [tangermeme](https://github.com/jmschrei/tangermeme) provides `one_hot_encode` and `characters` utilities that handle this (and reading FASTA/loci) for you.
 
+### Running on CPU or GPU
+
+By default `ledidi(...)` moves the model and tensors to the GPU (`device='cuda'`). On a machine without a CUDA GPU you must pass `device='cpu'` explicitly, otherwise the call will error:
+
+```python
+X_hat = ledidi(model, X, y_bar, device='cpu')
+```
+
 ### Usage
 
 Please see the [documentation site](https://ledidi.readthedocs.io/en/latest/) for more complete tutorials on how to use Ledidi. You can find some example BPNet models -- including the one used in the tutorials -- at https://zenodo.org/records/14604495.
