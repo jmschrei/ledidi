@@ -151,6 +151,26 @@ You can also look at where edits were proposed across the entire process. This g
 
 <img src="https://github.com/user-attachments/assets/f115605e-cc26-4ba8-b3ed-ff0b336f06b4" width="60%" height="60%">
 
+### Key parameters
+
+Most designs only require tuning a couple of knobs. These are passed straight through `ledidi(...)`:
+
+| Parameter | Default | What it does |
+|---|---|---|
+| `l` | `0.1` | Weight on the edit (input) loss. **The main knob to tune** — lower values prioritize hitting the target output, higher values prioritize making fewer edits. |
+| `target` | `None` | For a multi-task model, the index of the output to design against. `None` uses the whole output. |
+| `output_loss` | `MSELoss()` | The loss comparing the model's prediction to `y_bar`. Swap in any callable `f(y_hat, y_bar)`. |
+| `tau` | `1` | Gumbel-softmax temperature; higher is sharper (closer to a hard argmax). |
+| `batch_size` | `16` | Sequences sampled and averaged per iteration. |
+| `max_iter` | `1000` | Maximum optimization iterations. |
+| `early_stopping_iter` | `100` | Stop after this many iterations without improvement. |
+| `input_mask` | `None` | Boolean mask, length `length`, of positions that may **not** be edited. |
+| `random_state` | `None` | Seed for reproducible sampling. Unlike calling `torch.manual_seed`, this does not mutate the global RNG, so it leaves the rest of your script unaffected. |
+| `device` | `'cuda'` | Device to run on (pass `'cpu'` if you have no GPU). |
+| `verbose` | `True` | Print the input, output, and total loss as the design proceeds. |
+
+A few parameters live on `ledidi()` itself rather than being passed through: `n_samples` (draw this many designed sequences after optimization), `n_repeats` (run the whole procedure multiple times), and `return_history` / `return_designer` (also return the loss history / the fitted designer).
+
 ### Roadmap
 
 Ledidi is research software under active development. The broad direction, roughly in order of priority:
