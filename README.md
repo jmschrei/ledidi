@@ -204,6 +204,21 @@ X_pruned = greedy_pruning(model, X, X_hat[:1], threshold=1)  # prunes a single s
 
 There are also plotting helpers in `ledidi.plot` (`plot_edits`, `plot_history`).
 
+### Inspecting the edits
+
+To see exactly which positions changed and how, compare the original sequence to a designed one:
+
+```python
+seq = X_hat[0]  # one designed sequence, shape (4, length)
+positions = torch.where((X[0] != seq).any(dim=0))[0]
+for p in positions:
+	before = "ACGT"[X[0, :, p].argmax()]
+	after  = "ACGT"[seq[:, p].argmax()]
+	print(f"position {p.item()}: {before} -> {after}")
+```
+
+For the Quickstart example this prints just two edits, the ones that complete the `TGACTCA` motif. Each of the `batch_size` sequences in `X_hat` is sampled independently, so they may carry slightly different edits.
+
 ### Roadmap
 
 Ledidi is research software under active development. The broad direction, roughly in order of priority:
