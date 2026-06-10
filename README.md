@@ -25,6 +25,14 @@ Although our examples right now are largely nucleotide sequence-based, one can a
 
 If you already have PyTorch installed, this should take less than a minute. Otherwise, it may take several minutes, of which most of the time is spent installing PyTorch.
 
+To install from source for development, Ledidi is packaged with a `pyproject.toml` and is built with [uv](https://docs.astral.sh/uv/):
+
+```
+git clone https://github.com/jmschrei/ledidi
+cd ledidi
+uv pip install -e .
+```
+
 ### Usage
 
 Please see the [documentation site](https://ledidi.readthedocs.io/en/latest/) for more complete tutorials on how to use Ledidi. You can find some example BPNet models -- including the one used in the tutorials -- at https://zenodo.org/records/14604495.
