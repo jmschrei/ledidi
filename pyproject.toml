@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ledidi"
+dynamic = ["version"]
+description = "Ledidi is an optimization approach for designing edits to biological sequences."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Jacob Schreiber", email = "jmschreiber91@gmail.com" },
+    { name = "Yang Lu" },
+]
+dependencies = [
+    "torch >= 1.9.0",
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "logomaker",
+]
+
+[project.urls]
+Homepage = "https://github.com/jmschrei/ledidi"
+Documentation = "https://ledidi.readthedocs.io/en/latest/"
+Repository = "https://github.com/jmschrei/ledidi"
+
+[tool.hatch.version]
+path = "ledidi/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ledidi"]
