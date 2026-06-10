@@ -1,5 +1,8 @@
 claude_comments/
 
+# Standalone gumbel-softmax equivalence verification script
+verify_gumbel.py
+
 # Python
 __pycache__/
 *.py[cod]
@@ -7,3 +10,4 @@ __pycache__/
 .ipynb_checkpoints/
 build/
 dist/
+.venv/
