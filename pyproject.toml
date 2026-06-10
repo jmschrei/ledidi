@@ -13,6 +13,14 @@ authors = [
     { name = "Jacob Schreiber", email = "jmschreiber91@gmail.com" },
     { name = "Yang Lu" },
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
     "torch >= 1.9.0",
     "numpy",
