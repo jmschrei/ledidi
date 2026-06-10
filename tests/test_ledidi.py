@@ -471,55 +471,58 @@ def _edited_positions(X, X_hat, row=0):
 	return torch.where((X != X_hat).sum(dim=1).bool()[row])[0]
 
 
-# The exact positions edited in the first designed sequence when SumModel is
-# pushed toward the composition [40, 10, 40, 10] from the random_state=0 seed.
-SUM_MODEL_EDITS_RS0 = [
-	2, 4, 5, 6, 7, 13, 21, 22, 27, 28, 30, 34, 37, 38, 43, 44, 45, 47, 49, 52,
-	53, 59, 60, 64, 70, 75, 76, 78, 83, 84, 85, 86, 87, 88, 91, 94, 97, 98
-]
-
-# The nucleotide each of those positions was edited to (mostly A/G, the
-# up-weighted channels, with a few C to satisfy the C=10 part of the target).
-SUM_MODEL_EDIT_CHARS_RS0 = "AGGAGGAGGGACAAACAAGGGGGAAGAGAGGAAGGGGG"
+# Note on what is asserted below. A complete gradient-descent design is
+# reproducible on a given machine (the `torch.equal` checks) but its exact
+# edits are NOT portable across machines: floating-point non-associativity in
+# the optimizer accumulation makes hundreds of AdamW steps diverge by an edit
+# or two between CPU architectures. So these tests pin machine-portable
+# invariants -- the objective is reached within tolerance, the edits move
+# composition/predictions in the intended direction, and the count is sane --
+# rather than exact positions. The short, small-model regression earlier in
+# this file (test_ledidi_fit_transform_regression) is what pins exact values.
 
 
 def test_design_sum_model_composition_edits():
 	# SumModel's output is the per-channel nucleotide count, so a target of
 	# [40, 10, 40, 10] is a direct objective over composition: raise A and G,
-	# lower C and T. The design should hit that composition exactly and every
-	# edit should convert a position to one of the up-weighted nucleotides.
+	# lower C and T. A complete design run should move the composition close to
+	# that target and propose edits that effect that shift.
 	X = _long_X(0)
-	y_bar = torch.tensor([[40.0, 10.0, 40.0, 10.0]])
+	target = torch.tensor([40.0, 10.0, 40.0, 10.0])
+	y_bar = target.unsqueeze(0)
 
 	X_hat = ledidi(SumModel(), X, y_bar, random_state=0, device='cpu',
+		verbose=False)
+	X_hat2 = ledidi(SumModel(), X, y_bar, random_state=0, device='cpu',
 		verbose=False)
 
 	assert X_hat.shape == (16, 4, 100)
 	assert torch.all(X_hat.sum(dim=1) == 1)
+	assert torch.equal(X_hat, X_hat2)
 
-	# The first designed sequence reaches the target composition exactly.
-	assert X_hat[0].sum(dim=-1).tolist() == [40, 10, 40, 10]
+	comp = X_hat[0].sum(dim=-1)
+	orig = X[0].sum(dim=-1)
 
-	# The exact edited positions and the nucleotide each became are pinned as
-	# regression values -- this is the literal record of what was edited.
-	edited = _edited_positions(X, X_hat).tolist()
-	assert edited == SUM_MODEL_EDITS_RS0
+	# The design moved composition toward the target and landed close to it.
+	assert (comp - target).abs().sum() < (orig - target).abs().sum()
+	assert (comp - target).abs().sum() <= 6
 
-	new_chars = "".join("ACGT"[c] for c in X_hat[0, :, edited].argmax(dim=0).tolist())
-	assert new_chars == SUM_MODEL_EDIT_CHARS_RS0
+	# The edits raised A + G and lowered C + T, as the objective demands.
+	assert comp[0] + comp[2] >= 70
+	assert comp[1] + comp[3] <= 30
+
+	# Edits were proposed at a sensible number of positions.
+	assert 20 <= len(_edited_positions(X, X_hat)) <= 60
 
 
 def test_design_sum_model_across_initializations():
-	# Across several initializations the design is reproducible and reaches (or
-	# nearly reaches) the target composition, with a pinned number of edits.
-	y_bar = torch.tensor([[40.0, 10.0, 40.0, 10.0]])
-	expected = {
-		0: {'n_edits': 38, 'comp': [40, 10, 40, 10]},
-		1: {'n_edits': 37, 'comp': [40, 10, 40, 10]},
-		2: {'n_edits': 26, 'comp': [41, 9, 40, 10]},
-	}
+	# Across several initializations the design is reproducible (on this
+	# machine) and reaches the target composition within tolerance, proposing a
+	# sane number of edits each time.
+	target = torch.tensor([40.0, 10.0, 40.0, 10.0])
+	y_bar = target.unsqueeze(0)
 
-	for rs, exp in expected.items():
+	for rs in (0, 1, 2):
 		X = _long_X(rs)
 		X_hat = ledidi(SumModel(), X, y_bar, random_state=rs, device='cpu',
 			verbose=False)
@@ -527,21 +530,17 @@ def test_design_sum_model_across_initializations():
 			verbose=False)
 
 		assert torch.equal(X_hat, X_hat2)
-		assert len(_edited_positions(X, X_hat)) == exp['n_edits']
-		assert X_hat[0].sum(dim=-1).tolist() == exp['comp']
+		assert (X_hat[0].sum(dim=-1) - target).abs().sum() <= 6
+		assert 15 <= len(_edited_positions(X, X_hat)) <= 60
 
 
 def test_design_flatten_dense():
-	# A long-sequence design against the linear FlattenDense oracle, pinning the
-	# edit counts and the designed predictions and checking that the design
-	# moved the outputs toward the [5, -5, 0] target.
-	expected = {
-		0: {'n_edits': 56, 'pred': [2.0901, -1.8956, -0.0103]},
-		1: {'n_edits': 44, 'pred': [2.1669, -1.8537, 0.0298]},
-	}
+	# A long-sequence design against the linear FlattenDense oracle. The design
+	# is reproducible on this machine and drives output 0 up toward +5 and
+	# output 1 down toward -5 relative to the original prediction.
 	y_bar = torch.tensor([[5.0, -5.0, 0.0]])
 
-	for rs, exp in expected.items():
+	for rs in (0, 1):
 		torch.manual_seed(0)
 		model = FlattenDense(seq_len=100, n_outputs=3)
 		X = _long_X(rs)
@@ -552,15 +551,12 @@ def test_design_flatten_dense():
 			verbose=False)
 
 		assert torch.equal(X_hat, X_hat2)
-		assert len(_edited_positions(X, X_hat)) == exp['n_edits']
+		assert 20 <= len(_edited_positions(X, X_hat)) <= 70
 
 		pred = model(X_hat).mean(dim=0)
-		assert_array_almost_equal(pred.detach().numpy(), exp['pred'], 4)
-
-		# Output 0 was driven up and output 1 down relative to the original.
 		orig = model(X)[0]
-		assert pred[0] > orig[0]
-		assert pred[1] < orig[1]
+		assert pred[0] > orig[0] + 1.0
+		assert pred[1] < orig[1] - 1.0
 
 
 def test_design_across_tangermeme_models():
