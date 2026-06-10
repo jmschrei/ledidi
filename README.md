@@ -171,6 +171,39 @@ Most designs only require tuning a couple of knobs. These are passed straight th
 
 A few parameters live on `ledidi()` itself rather than being passed through: `n_samples` (draw this many designed sequences after optimization), `n_repeats` (run the whole procedure multiple times), and `return_history` / `return_designer` (also return the loss history / the fitted designer).
 
+### Multiple models, custom losses, and pruning
+
+The top-level package exports `ledidi` and `Ledidi`; the other tools live in their own submodules.
+
+**Balance several oracles** by combining them with `DesignWrapper`, which concatenates their predictions. Pass a vector `y_bar` with one target per model — for example, to raise one model's output while holding another's fixed:
+
+```python
+from ledidi.wrappers import DesignWrapper
+
+model = DesignWrapper([model_a, model_b])  # predictions concatenated along the last axis
+X_hat = ledidi(model, X, y_bar, device="cpu")  # y_bar has one entry per model output
+```
+
+**Design cell-type-specific elements** with the `MinGap` loss, which maximizes a set of on-target outputs while minimizing the off-target ones. It ignores `y_bar` (still required by the signature, so pass a placeholder):
+
+```python
+import torch
+from ledidi.losses import MinGap
+
+in_mask = torch.tensor([True, False, False])  # output 0 on-target; 1 and 2 off-target
+X_hat = ledidi(model, X, torch.zeros(1, 3), output_loss=MinGap(in_mask), device="cpu")
+```
+
+**Trim unnecessary edits** after design with `greedy_pruning`, which removes edits one at a time as long as each removal changes the model output by less than `threshold`:
+
+```python
+from ledidi.pruning import greedy_pruning
+
+X_pruned = greedy_pruning(model, X, X_hat[:1], threshold=1)  # prunes a single sequence
+```
+
+There are also plotting helpers in `ledidi.plot` (`plot_edits`, `plot_history`).
+
 ### Roadmap
 
 Ledidi is research software under active development. The broad direction, roughly in order of priority:
