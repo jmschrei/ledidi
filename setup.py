@@ -11,6 +11,9 @@ setup(
     description='Ledidi is an optimization approach for designing edits to biological sequences.',
     install_requires=[
         "torch >= 1.9.0",
-        "matplotlib"
+        "numpy",
+        "pandas",
+        "matplotlib",
+        "logomaker"
     ],
 )

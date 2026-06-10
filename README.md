@@ -17,7 +17,7 @@ Ledidi resolves this challenge by phrasing edit design as an optimization proble
 
 ![image](https://github.com/user-attachments/assets/41ffe180-8171-4f28-a88e-41cc1c79985a)
 
-Applied out-of-the-box across dozens of sequence-based ML models, Ledidi can design edits turning a sequence that do not exhibit some form of activity (e.g., TF binding, transcription, etc) and turn it into one exhibiting strong activity! Despite major differences in these models, this design does not require any hyperparameter tuning to get good results, and only requires balancing the input and output loss in a simple way to get the best results.
+Applied out-of-the-box across dozens of sequence-based ML models, Ledidi can take a sequence that does not exhibit some form of activity (e.g., TF binding, transcription, etc) and design edits that turn it into one exhibiting strong activity! Despite major differences in these models, this design does not require any hyperparameter tuning to get good results, and only requires balancing the input and output loss in a simple way to get the best results.
 
 <img width="1367" alt="image" src="https://github.com/user-attachments/assets/39edd8fc-be58-4fb3-8006-18401fc81336" />
 
@@ -30,13 +30,13 @@ Although our examples right now are largely nucleotide sequence-based, one can a
 
 Please see the [documentation site](https://ledidi.readthedocs.io/en/latest/) for more complete tutorials on how to use Ledidi. You can find some example BPNet models -- including the one used in the tutorials -- at https://zenodo.org/records/14604495.
 
-At a high level, Ledidi requires a a sequence-based machine learning model, an initial sequence, and a desired output from the model. If the model is multi-task, this desired output does not need to cover all of the tasks and can even just use a single one (see this tutorial on [PyTorch wrappers](https://tangermeme.readthedocs.io/en/latest/vignettes/Wrappers_are_Productivity_Hacks.html) for practical advice on how to manipulate models to make them easier to work with Ledidi). These three items are then passed into `ledidi` for design! Note that there is also a `Ledidi` object which is an internal wrapper. No need to use that yet.
+At a high level, Ledidi requires a sequence-based machine learning model, an initial sequence, and a desired output from the model. If the model is multi-task, this desired output does not need to cover all of the tasks and can even just use a single one (see this tutorial on [PyTorch wrappers](https://tangermeme.readthedocs.io/en/latest/vignettes/Wrappers_are_Productivity_Hacks.html) for practical advice on how to manipulate models to make them easier to work with Ledidi). These three items are then passed into `ledidi` for design! Note that there is also a `Ledidi` object which is an internal wrapper. No need to use that yet.
 
 ```python
 import torch
 from bpnetlite.bpnet import ControlWrapper
 from bpnetlite.bpnet import CountWrapper
-from Ledidi import ledidi
+from ledidi import ledidi
 
 X = .. your sequence ..
 
