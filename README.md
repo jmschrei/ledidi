@@ -219,6 +219,17 @@ for p in positions:
 
 For the Quickstart example this prints just two edits, the ones that complete the `TGACTCA` motif. Each of the `batch_size` sequences in `X_hat` is sampled independently, so they may carry slightly different edits.
 
+### Tutorials
+
+Worked examples as Jupyter notebooks (also rendered on the [documentation site](https://ledidi.readthedocs.io/en/latest/)). Several use BPNet oracle models available at https://zenodo.org/records/14604495.
+
+1. [Design of Protein Binding Sites](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_1_-_Design_of_Protein_Binding_Sites.ipynb)
+2. [Constraints and Priors](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_2_-_Constraints_and_Priors.ipynb)
+3. [In-Painting](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_3_-_In-Painting.ipynb)
+4. [Multiple Models](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_4_-_Multiple_Models.ipynb)
+5. [Affinity Catalogs](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_5_-_Affinity_Catalogs.ipynb)
+6. [Custom Loss Functions](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_6_-_Custom_Loss_Functions.ipynb)
+
 ### Roadmap
 
 Ledidi is research software under active development. The broad direction, roughly in order of priority:
