@@ -64,9 +64,12 @@ def plot_edits(X_orig, X_attrs, colors='darkorange', **kwargs):
 		such a tensor.
 	
 	colors: str or list, optional
-		What color to use for the edited characters. If a list is provided, should be
-		of length X_attrs.shape[0]-1, providing a color for each edited sequence.
-		Default is darkorange.
+		What color to use for the edited characters. If a single string is
+		provided, that color is used for every track. If a list is provided, it
+		is indexed per track and so must have one entry for each track that is
+		plotted, i.e. length X_attrs.shape[0] + 1 to account for the original
+		sequence being prepended as the first track (its entry is unused since
+		that track has no edits). Default is darkorange.
 	
 	**kwargs: args, optional
 		Any additional arguments to pass into plt.figure.

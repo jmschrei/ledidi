@@ -4,14 +4,6 @@
    contain the root `toctree` directive.
 
 
-    .. image:: logo/pomegranate-logo.png
-        :width: 300px
-
-
-    .. image:: https://readthedocs.org/projects/pomegranate/badge/?version=latest
-       :target: http://pomegranate.readthedocs.io/en/latest/?badge=latest
-
-
 ledidi
 ==========
 

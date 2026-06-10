@@ -37,9 +37,9 @@ def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 		can have. Default is 1.
 
 	target: int or None
-		When given a multi-task model, the target to slice out and feed into
-		output_loss when calculating the gradient. If None, perform no slicing.
-		Default is None.
+		When given a multi-task model, the target to slice out of the model
+		output when measuring the change in prediction caused by reverting an
+		edit. If None, perform no slicing. Default is None.
 
 	verbose: bool, optional
 		Whether to print out the index and delta at each iteration.

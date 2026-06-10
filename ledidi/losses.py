@@ -29,15 +29,42 @@ class MinGap():
 
 	Parameters
 	----------
-	in_mask: torch.Tensor, shape=(1, n), dtype=bool
-		A boolean tensor over the outputs from the underlying predictive model.
-		True means to maximize values 
+	in_mask: torch.Tensor, shape=(n,), dtype=bool
+		A boolean mask over the `n` outputs from the underlying predictive model.
+		True marks an output as on-target, i.e., one whose value should be
+		maximized, and False marks an output as off-target, i.e., one whose value
+		should be minimized.
 	"""
-	
+
 	def __init__(self, in_mask):
 		self.in_mask = in_mask
-        
+
 	def __call__(self, y_hat, y_bar):
+		"""Compute the min-gap loss for a batch of predictions.
+
+		Note that `y_bar` is accepted only to match the `(y_hat, y_bar)`
+		signature that Ledidi expects of an output loss; the min-gap loss has no
+		target values and so `y_bar` is ignored entirely.
+
+
+		Parameters
+		----------
+		y_hat: torch.Tensor, shape=(batch_size, n)
+			The predicted outputs from the underlying model for a batch of
+			edited sequences.
+
+		y_bar: torch.Tensor
+			Ignored. Present only for signature compatibility with Ledidi.
+
+
+		Returns
+		-------
+		loss: torch.Tensor, shape=()
+			The mean over the batch of the gap between the maximum off-target
+			value and the minimum on-target value. Minimizing this maximizes the
+			separation between the on- and off-target outputs.
+		"""
+
 		on_target = y_hat[:, self.in_mask].min(dim=-1).values
 		off_target = y_hat[:, ~self.in_mask].max(dim=-1).values
 		return torch.mean(off_target - on_target)

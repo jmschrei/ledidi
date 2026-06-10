@@ -27,7 +27,7 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 	continuous optimization problem and the consistency of still sampling one-hot
 	encoded sequences to run through the oracle model.
 
-	The oracle model can bd a single task from a single model, multiple tasks
+	The oracle model can be a single task from a single model, multiple tasks
 	from the same model, or even multiple tasks from multiple models. All that
 	matters is that the entire thing is differentiable. PyTorch makes the use of
 	multiple tasks/models easy through the use of wrappers. See
@@ -106,7 +106,7 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 	
 	Returns
 	-------
-	y: torch.Tensor, shape=(*ny, *n_repeats, n_sample, n_channels, length)
+	y: torch.Tensor, shape=(*ny, *n_repeats, n_samples, n_channels, length)
 		A tensor containing a batch of one-hot encoded sequences which may contain 
 		one or more edits compared to the sequence that was passed in. If a list of
 		`y_bar` values has been passed in, indicating that one would like to design
@@ -216,7 +216,8 @@ class Ledidi(torch.nn.Module):
         A loss to apply to the input space. By default this is the L1 loss
         which corresponds to the number of positions that have been edited.
         This loss is also divided by 2 to account for each edit changing
-        two values within that position. Default is torch.nn.L1Loss.
+        two values within that position. Default is
+        torch.nn.L1Loss(reduction='sum').
 
     output_loss: torch.nn.Loss, optional
         A loss to apply to the output space. By default this is the L2 loss
@@ -232,29 +233,33 @@ class Ledidi(torch.nn.Module):
     l: float, positive, optional
         The mixing weight parameter between the input loss and the output loss,
         applied to the input loss. The smaller this value is the more important
-        it is that the output loss is minimized. Default is 0.01.
+        it is that the output loss is minimized. Default is 0.1.
 
     batch_size: int, optional
-        The number of sequences to generate at each step and average loss over. 
-        Default is 64.
+        The number of sequences to generate at each step and average loss over.
+        Default is 16.
 
     max_iter: int, optional
         The maximum number of iterations to continue generating samples.
         Default is 1000.
 
-    report_iter: int optional
+    early_stopping_iter: int, optional
+        The number of consecutive iterations without an improvement in the total
+        loss to allow before stopping the optimization early. Default is 100.
+
+    report_iter: int, optional
         The number of iterations to perform before reporting results of the
         optimization. Default is 100.
 
     lr: float, optional
-        The learning rate of the procedure. Default is 0.1.
+        The learning rate of the procedure. Default is 1.0.
 
     input_mask: torch.Tensor or None, shape=(shape[-1],)
         A mask where 1 indicates what positions cannot be edited. This will 
         set the initial weights mask to -inf at those positions. If None, no 
         positions are masked out. Default is None.
 
-    initial_weights: torch.Tensor or None, shape=(1, shape[0, shape[1])
+    initial_weights: torch.Tensor or None, shape=(1, shape[0], shape[1])
         Initial weights to use in the weight matrix to specify priors in the
         composition of edits that can be made. Positive values mean more likely
         that certain edits are proposed, negative values mean less likely that
@@ -266,8 +271,10 @@ class Ledidi(torch.nn.Module):
         higher a value in the design weight needs to be achieved before
         an edit can be induced. Default is 1e-4.
 
-    random_state: int or None, optional
-        Whether to force determinism.
+    return_history: bool, optional
+        Whether to have `fit_transform` return a history dictionary recording
+        the input loss, output loss, total loss, and proposed edits at each
+        iteration in addition to the designed sequence. Default is False.
 
     verbose: bool, optional
         Whether to print the loss during design. Default is True.

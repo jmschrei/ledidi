@@ -1,5 +1,5 @@
-pruning
-=======
+losses
+======
 
-.. automodule:: ledidi.pruning
-	:members: greedy_pruning
+.. automodule:: ledidi.losses
+	:members: MinGap
