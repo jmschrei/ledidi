@@ -251,3 +251,20 @@ Ledidi is research software under active development. The broad direction, rough
 8. **Agentic interfaces.** Programmatic, agent-facing entry points built on top of the command-line pipeline, so that an agent can carry out the full design loop end to end without a human manually performing any of the steps.
 
 Two threads cut across all of these: **reproducibility and provenance** — capturing the full recipe behind every design so it can be audited and regenerated — and **modality breadth**, with first-class support for RNA, protein, and other categorical sequences beyond DNA.
+
+### Citation
+
+If you use Ledidi in your work, please cite the preprint:
+
+> Schreiber, J., Lorbeer, F. K., Heinzl, M., Lu, Y., Stark, A., & Noble, W. S. (2025). Programmatic design and editing of cis-regulatory elements. *bioRxiv*. https://doi.org/10.1101/2025.04.22.650035
+
+```bibtex
+@article{schreiber2025ledidi,
+  title={Programmatic design and editing of cis-regulatory elements},
+  author={Schreiber, Jacob and Lorbeer, Franziska Katharina and Heinzl, Monika and Lu, Yang and Stark, Alexander and Noble, William Stafford},
+  journal={bioRxiv},
+  year={2025},
+  doi={10.1101/2025.04.22.650035},
+  url={https://www.biorxiv.org/content/10.1101/2025.04.22.650035v1}
+}
+```
