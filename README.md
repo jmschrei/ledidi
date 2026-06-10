@@ -75,3 +75,25 @@ This means that by iteration 100, an average of 35.75 edits were proposed per se
 You can also look at where edits were proposed across the entire process. This gives you a sense for how long edits persisted across the process. In this example, tons of edits are proposed initially and then many of them are undone because the input loss tries to minimize this number.
 
 <img src="https://github.com/user-attachments/assets/f115605e-cc26-4ba8-b3ed-ff0b336f06b4" width="60%" height="60%">
+
+### Roadmap
+
+Ledidi is research software under active development. The broad direction, roughly in order of priority:
+
+1. **Hardening and usability.** Expand the test suite and coverage, improve robustness and error messages, and grow the tutorials so that going from a trained model to a finished design is straightforward and hard to get wrong.
+
+2. **Validation, trust, and benchmarking.** Gradient-based design can exploit an oracle and produce sequences that score well but are not biologically meaningful. We want first-class evaluation built in: round-tripping designs through independent held-out models, attribution-based checks that the intended motifs were actually created, realism checks against natural sequence, and a reproducible benchmark across many oracles.
+
+3. **Interoperability and end-to-end pipelines.** Tight integration with sibling tools — such as [tangermeme](https://github.com/jmschrei/tangermeme) for attribution and in silico mutagenesis, and efficient oracle models — so that one can go from raw data all the way to finished designs using command-line tools alone.
+
+4. **Multi-objective design under biological constraints.** Designing for several properties at once while respecting hard constraints such as GC content, restriction sites, codon usage, and the absence of off-target effects.
+
+5. **Insertions and deletions.** Extending Ledidi beyond substitutions so that designs can change the length of a sequence, not just its content.
+
+6. **Minimal constructs.** Merging the idea of design with that of in silico marginalization to build the smallest possible construct that still exhibits a desired property, generalizing the current greedy pruning of edits.
+
+7. **Uncertainty and ensembling.** Confidence estimates for designs through oracle ensembles and calibration, so that both people and automated systems know when a design can be trusted.
+
+8. **Agentic interfaces.** Programmatic, agent-facing entry points built on top of the command-line pipeline, so that an agent can carry out the full design loop end to end without a human manually performing any of the steps.
+
+Two threads cut across all of these: **reproducibility and provenance** — capturing the full recipe behind every design so it can be audited and regenerated — and **modality breadth**, with first-class support for RNA, protein, and other categorical sequences beyond DNA.
