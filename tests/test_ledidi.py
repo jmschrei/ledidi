@@ -10,6 +10,8 @@ from ledidi.ledidi import _gumbel_softmax_hard
 
 from .toy_models import SumModel
 from .toy_models import FlattenDense
+from .toy_models import SmallDeepSEA
+from .toy_models import ConvAvgDense
 
 from numpy.testing import assert_raises
 from numpy.testing import assert_almost_equal
@@ -442,3 +444,160 @@ def test_ledidi_wrapper_target(model, X):
 	X_hat = ledidi(model, X, torch.tensor([[5.0]]), target=0, batch_size=4,
 		max_iter=20, random_state=0, device='cpu', verbose=False)
 	assert X_hat.shape == (4, 4, 12)
+
+
+###
+# Complete design runs on a long (100 bp) sequence, across the toy models from
+# the tangermeme test suite and several initializations. These run the full
+# optimization to convergence (default max_iter / early stopping) and pin the
+# resulting edits as regression values. Because the seeded sampler is fully
+# deterministic and the edits are selected by argmax, these gold values are
+# stable run-to-run; they will flag any change to the design behavior.
+
+
+def _long_X(random_state):
+	"""A single one-hot encoded sequence of shape (1, 4, 100)."""
+
+	idxs = torch.randint(0, 4, (1, 100),
+		generator=torch.Generator().manual_seed(random_state))
+	X = torch.zeros(1, 4, 100)
+	X.scatter_(1, idxs.unsqueeze(1), 1.0)
+	return X
+
+
+def _edited_positions(X, X_hat, row=0):
+	"""The positions at which designed sequence `row` differs from `X`."""
+
+	return torch.where((X != X_hat).sum(dim=1).bool()[row])[0]
+
+
+# The exact positions edited in the first designed sequence when SumModel is
+# pushed toward the composition [40, 10, 40, 10] from the random_state=0 seed.
+SUM_MODEL_EDITS_RS0 = [
+	2, 4, 5, 6, 7, 13, 21, 22, 27, 28, 30, 34, 37, 38, 43, 44, 45, 47, 49, 52,
+	53, 59, 60, 64, 70, 75, 76, 78, 83, 84, 85, 86, 87, 88, 91, 94, 97, 98
+]
+
+# The nucleotide each of those positions was edited to (mostly A/G, the
+# up-weighted channels, with a few C to satisfy the C=10 part of the target).
+SUM_MODEL_EDIT_CHARS_RS0 = "AGGAGGAGGGACAAACAAGGGGGAAGAGAGGAAGGGGG"
+
+
+def test_design_sum_model_composition_edits():
+	# SumModel's output is the per-channel nucleotide count, so a target of
+	# [40, 10, 40, 10] is a direct objective over composition: raise A and G,
+	# lower C and T. The design should hit that composition exactly and every
+	# edit should convert a position to one of the up-weighted nucleotides.
+	X = _long_X(0)
+	y_bar = torch.tensor([[40.0, 10.0, 40.0, 10.0]])
+
+	X_hat = ledidi(SumModel(), X, y_bar, random_state=0, device='cpu',
+		verbose=False)
+
+	assert X_hat.shape == (16, 4, 100)
+	assert torch.all(X_hat.sum(dim=1) == 1)
+
+	# The first designed sequence reaches the target composition exactly.
+	assert X_hat[0].sum(dim=-1).tolist() == [40, 10, 40, 10]
+
+	# The exact edited positions and the nucleotide each became are pinned as
+	# regression values -- this is the literal record of what was edited.
+	edited = _edited_positions(X, X_hat).tolist()
+	assert edited == SUM_MODEL_EDITS_RS0
+
+	new_chars = "".join("ACGT"[c] for c in X_hat[0, :, edited].argmax(dim=0).tolist())
+	assert new_chars == SUM_MODEL_EDIT_CHARS_RS0
+
+
+def test_design_sum_model_across_initializations():
+	# Across several initializations the design is reproducible and reaches (or
+	# nearly reaches) the target composition, with a pinned number of edits.
+	y_bar = torch.tensor([[40.0, 10.0, 40.0, 10.0]])
+	expected = {
+		0: {'n_edits': 38, 'comp': [40, 10, 40, 10]},
+		1: {'n_edits': 37, 'comp': [40, 10, 40, 10]},
+		2: {'n_edits': 26, 'comp': [41, 9, 40, 10]},
+	}
+
+	for rs, exp in expected.items():
+		X = _long_X(rs)
+		X_hat = ledidi(SumModel(), X, y_bar, random_state=rs, device='cpu',
+			verbose=False)
+		X_hat2 = ledidi(SumModel(), X, y_bar, random_state=rs, device='cpu',
+			verbose=False)
+
+		assert torch.equal(X_hat, X_hat2)
+		assert len(_edited_positions(X, X_hat)) == exp['n_edits']
+		assert X_hat[0].sum(dim=-1).tolist() == exp['comp']
+
+
+def test_design_flatten_dense():
+	# A long-sequence design against the linear FlattenDense oracle, pinning the
+	# edit counts and the designed predictions and checking that the design
+	# moved the outputs toward the [5, -5, 0] target.
+	expected = {
+		0: {'n_edits': 56, 'pred': [2.0901, -1.8956, -0.0103]},
+		1: {'n_edits': 44, 'pred': [2.1669, -1.8537, 0.0298]},
+	}
+	y_bar = torch.tensor([[5.0, -5.0, 0.0]])
+
+	for rs, exp in expected.items():
+		torch.manual_seed(0)
+		model = FlattenDense(seq_len=100, n_outputs=3)
+		X = _long_X(rs)
+
+		X_hat = ledidi(model, X, y_bar, random_state=rs, device='cpu',
+			verbose=False)
+		X_hat2 = ledidi(model, X, y_bar, random_state=rs, device='cpu',
+			verbose=False)
+
+		assert torch.equal(X_hat, X_hat2)
+		assert len(_edited_positions(X, X_hat)) == exp['n_edits']
+
+		pred = model(X_hat).mean(dim=0)
+		assert_array_almost_equal(pred.detach().numpy(), exp['pred'], 4)
+
+		# Output 0 was driven up and output 1 down relative to the original.
+		orig = model(X)[0]
+		assert pred[0] > orig[0]
+		assert pred[1] < orig[1]
+
+
+def test_design_across_tangermeme_models():
+	# A complete design run against each toy model from the tangermeme suite, on
+	# a long sequence and a couple of initializations. The convolutional models
+	# use a smaller input-loss weight so that edits are actually proposed
+	# through their weaker gradients. Each run must be reproducible, return a
+	# valid batch of one-hot sequences, and propose at least one edit.
+	# `check_repro` re-runs the design and asserts identical output. It is
+	# enabled only for the convolutional models, whose determinism through the
+	# seeded sampler is not exercised by the linear-model tests above.
+	cases = [
+		(lambda: SumModel(), torch.tensor([[40.0, 10.0, 40.0, 10.0]]), {}, False),
+		(lambda: FlattenDense(seq_len=100, n_outputs=3),
+			torch.tensor([[5.0, -5.0, 0.0]]), {}, False),
+		(lambda: SmallDeepSEA(n_outputs=1), torch.tensor([[10.0]]),
+			{'l': 0.01}, True),
+		(lambda: ConvAvgDense(n_outputs=1), torch.tensor([[5.0]]),
+			{'l': 0.001}, True),
+	]
+
+	for make_model, y_bar, kwargs, check_repro in cases:
+		for rs in (0, 1):
+			torch.manual_seed(0)
+			model = make_model()
+			X = _long_X(rs)
+
+			X_hat = ledidi(model, X, y_bar, random_state=rs, device='cpu',
+				verbose=False, **kwargs)
+
+			assert X_hat.shape == (16, 4, 100)
+			assert torch.all(X_hat.sum(dim=1) == 1)
+			assert len(_edited_positions(X, X_hat)) > 0
+
+			if check_repro:
+				torch.manual_seed(0)
+				model2 = make_model()
+				X_hat2 = ledidi(model2, X, y_bar, random_state=rs,
+					device='cpu', verbose=False, **kwargs)
+				assert torch.equal(X_hat, X_hat2)

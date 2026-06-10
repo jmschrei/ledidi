@@ -69,7 +69,7 @@ def test_designwrapper_mixed_output_widths(X):
 
 
 def test_designwrapper_matches_manual_concatenation(X):
-	models = [FlattenDense(n_outputs=3), FlattenDense(n_outputs=2)]
+	models = [FlattenDense(seq_len=12, n_outputs=3), FlattenDense(seq_len=12, n_outputs=2)]
 	wrapper = DesignWrapper(models)
 
 	y = wrapper(X)
@@ -87,7 +87,8 @@ def test_designwrapper_three_models(X):
 
 def test_designwrapper_gradient_flows(X):
 	X = X.clone().requires_grad_(True)
-	wrapper = DesignWrapper([FlattenDense(n_outputs=3), FlattenDense(n_outputs=2)])
+	wrapper = DesignWrapper([FlattenDense(seq_len=12, n_outputs=3),
+		FlattenDense(seq_len=12, n_outputs=2)])
 
 	wrapper(X).sum().backward()
 	assert X.grad is not None
