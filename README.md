@@ -35,8 +35,10 @@ To install from source for development, Ledidi is packaged with a `pyproject.tom
 ```
 git clone https://github.com/jmschrei/ledidi
 cd ledidi
-uv pip install -e .
+uv pip install -e ".[dev]"
 ```
+
+The test suite runs on CPU with `python -m pytest tests/`.
 
 ### Quickstart
 
