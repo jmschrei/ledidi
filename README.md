@@ -268,3 +268,7 @@ If you use Ledidi in your work, please cite the preprint:
   url={https://www.biorxiv.org/content/10.1101/2025.04.22.650035v1}
 }
 ```
+
+### License
+
+Ledidi is released under the [Apache 2.0 License](https://github.com/jmschrei/ledidi/blob/master/LICENSE).
