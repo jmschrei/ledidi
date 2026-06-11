@@ -1,7 +1,7 @@
 # Ledidi
 
 [![PyPI version](https://img.shields.io/pypi/v/ledidi.svg)](https://pypi.org/project/ledidi/)
-[![Python versions](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://pypi.org/project/ledidi/)
+[![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/ledidi/)
 [![Tests](https://github.com/jmschrei/ledidi/actions/workflows/test.yml/badge.svg)](https://github.com/jmschrei/ledidi/actions/workflows/test.yml)
 [![Documentation Status](https://readthedocs.org/projects/ledidi/badge/?version=latest)](https://ledidi.readthedocs.io/en/latest/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/jmschrei/ledidi/blob/master/LICENSE)

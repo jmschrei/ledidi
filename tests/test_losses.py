@@ -107,3 +107,22 @@ def test_mingap_gradient(y_hat, in_mask):
 		[0.0, -0.5, 0.5, 0.0]
 	])
 	assert_array_almost_equal(y_hat.grad.numpy(), expected.numpy(), 4)
+
+
+###
+# MinGap -- input validation
+
+
+def test_mingap_in_mask_non_bool():
+	with pytest.raises(ValueError):
+		MinGap(torch.tensor([1, 1, 0, 0]))
+
+
+def test_mingap_in_mask_all_true():
+	with pytest.raises(ValueError):
+		MinGap(torch.tensor([True, True, True, True]))
+
+
+def test_mingap_in_mask_all_false():
+	with pytest.raises(ValueError):
+		MinGap(torch.tensor([False, False, False, False]))

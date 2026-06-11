@@ -2,7 +2,9 @@
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 
 import time
+
 import torch
+from tangermeme.utils import _validate_input
 
 @torch.no_grad()
 def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
@@ -32,7 +34,7 @@ def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 		A tensor of the same shape as `X` except that it contains the proposed
 		edits.
 
-	threshold: float, optional
+	threshold: float, positive, optional
 		A threshold on the maximum change in model output that removing an edit
 		can have. Default is 1.
 
@@ -50,6 +52,20 @@ def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 		A tensor of the same shape as `X_hat` except with some of the edits
 		reverted back to what they were in `X`.
 	"""
+
+	if not isinstance(model, torch.nn.Module):
+		raise TypeError("model must be a torch.nn.Module, not `{}`".format(
+			type(model)))
+
+	if threshold <= 0:
+		raise ValueError("threshold must be positive, not `{}`".format(threshold))
+
+	if target is not None and not isinstance(target, int):
+		raise TypeError("target must be an integer or None, not `{}`".format(
+			type(target)))
+
+	_validate_input(X, "X", shape=(1, -1, -1), ohe=True, allow_N=True)
+	_validate_input(X_hat, "X_hat", shape=tuple(X.shape), ohe=True, allow_N=True)
 
 	model = model.eval()
 	X_hat = torch.clone(X_hat)

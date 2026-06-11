@@ -101,3 +101,36 @@ def test_greedy_pruning_high_threshold_full_with_target(X, X_hat):
 	# A large threshold prunes every channel-0-relevant edit too.
 	X_m = greedy_pruning(SumModel(), X, X_hat, threshold=10, target=0)
 	assert_array_almost_equal(X_m.numpy(), X.numpy(), 4)
+
+
+###
+# greedy_pruning -- input validation
+
+
+def test_greedy_pruning_invalid_model(X, X_hat):
+	with pytest.raises(TypeError):
+		greedy_pruning("not a model", X, X_hat)
+
+
+@pytest.mark.parametrize("threshold", [0, -1.0])
+def test_greedy_pruning_invalid_threshold(X, X_hat, threshold):
+	with pytest.raises(ValueError):
+		greedy_pruning(SumModel(), X, X_hat, threshold=threshold)
+
+
+def test_greedy_pruning_invalid_target(X, X_hat):
+	with pytest.raises(TypeError):
+		greedy_pruning(SumModel(), X, X_hat, target=1.5)
+
+
+def test_greedy_pruning_non_ohe(X):
+	X_hat = torch.full((1, 4, 6), 0.25)
+	with pytest.raises(ValueError):
+		greedy_pruning(SumModel(), X, X_hat)
+
+
+def test_greedy_pruning_shape_mismatch(X):
+	X_hat = torch.zeros(1, 4, 8)
+	X_hat[0, 0, :] = 1.0
+	with pytest.raises(ValueError):
+		greedy_pruning(SumModel(), X, X_hat)

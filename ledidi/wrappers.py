@@ -25,12 +25,26 @@ class DesignWrapper(torch.nn.Module):
 	
 	Parameters
 	----------
-	models: list, tuple
-		A set of torch.nn.Module objects.
+	models: list or tuple
+		A non-empty list or tuple of torch.nn.Module objects.
 	"""
 	
 	def __init__(self, models):
 		super(DesignWrapper, self).__init__()
+
+		if isinstance(models, torch.nn.Module):
+			raise TypeError("models must be a list or tuple of torch.nn.Module "
+				"objects, not a single torch.nn.Module")
+
+		if not isinstance(models, (list, tuple)) or len(models) == 0:
+			raise ValueError("models must be a non-empty list or tuple of "
+				"torch.nn.Module objects")
+
+		for i, model in enumerate(models):
+			if not isinstance(model, torch.nn.Module):
+				raise TypeError("models[{}] must be a torch.nn.Module, not "
+					"`{}`".format(i, type(model)))
+
 		self.models = torch.nn.ModuleList(models)
 
 	def forward(self, X):

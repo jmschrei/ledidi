@@ -597,3 +597,152 @@ def test_design_across_tangermeme_models():
 				X_hat2 = ledidi(model2, X, y_bar, random_state=rs,
 					device='cpu', verbose=False, **kwargs)
 				assert torch.equal(X_hat, X_hat2)
+
+
+###
+# Ledidi.__init__ -- input validation
+
+
+def test_ledidi_init_invalid_model():
+	with assert_raises(TypeError):
+		Ledidi("not a model", shape=(4, 12), verbose=False)
+
+
+@pytest.mark.parametrize("shape", [(4,), (4, 12, 1), (4, 0), (4, -1),
+	(4, 12.0)])
+def test_ledidi_init_invalid_shape(model, shape):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=shape, verbose=False)
+
+
+@pytest.mark.parametrize("target", [1.5, "0", [0]])
+def test_ledidi_init_invalid_target(model, target):
+	with assert_raises(TypeError):
+		Ledidi(model, shape=(4, 12), target=target, verbose=False)
+
+
+@pytest.mark.parametrize("tau", [0, -1.0])
+def test_ledidi_init_invalid_tau(model, tau):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), tau=tau, verbose=False)
+
+
+def test_ledidi_init_invalid_l(model):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), l=-0.1, verbose=False)
+
+
+def test_ledidi_init_l_zero_allowed(model):
+	# l is non-negative: 0 disables the input loss and must be accepted.
+	designer = Ledidi(model, shape=(4, 12), l=0, verbose=False)
+	assert designer.l == 0
+
+
+@pytest.mark.parametrize("batch_size", [0, -1, 1.5])
+def test_ledidi_init_invalid_batch_size(model, batch_size):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), batch_size=batch_size, verbose=False)
+
+
+@pytest.mark.parametrize("max_iter", [0, -1, 1.5])
+def test_ledidi_init_invalid_max_iter(model, max_iter):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), max_iter=max_iter, verbose=False)
+
+
+@pytest.mark.parametrize("early_stopping_iter", [0, -1, 1.5])
+def test_ledidi_init_invalid_early_stopping_iter(model, early_stopping_iter):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), early_stopping_iter=early_stopping_iter,
+			verbose=False)
+
+
+@pytest.mark.parametrize("report_iter", [0, -1, 1.5])
+def test_ledidi_init_invalid_report_iter(model, report_iter):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), report_iter=report_iter, verbose=False)
+
+
+@pytest.mark.parametrize("lr", [0, -1.0])
+def test_ledidi_init_invalid_lr(model, lr):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), lr=lr, verbose=False)
+
+
+@pytest.mark.parametrize("eps", [0, -1e-4])
+def test_ledidi_init_invalid_eps(model, eps):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), eps=eps, verbose=False)
+
+
+def test_ledidi_init_invalid_input_mask_dtype(model):
+	mask = torch.zeros(12, dtype=torch.float32)
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), input_mask=mask, verbose=False)
+
+
+def test_ledidi_init_invalid_input_mask_shape(model):
+	mask = torch.zeros(6, dtype=torch.bool)
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), input_mask=mask, verbose=False)
+
+
+def test_ledidi_init_invalid_initial_weights_shape(model):
+	weights = torch.zeros(1, 4, 6)
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), initial_weights=weights, verbose=False)
+
+
+###
+# Ledidi.forward / fit_transform -- input validation
+
+
+def test_ledidi_forward_invalid_shape(model):
+	designer = Ledidi(model, shape=(4, 12), batch_size=4, verbose=False)
+	X = torch.zeros(1, 4, 6)
+	with assert_raises(ValueError):
+		designer(X)
+
+
+def test_ledidi_fit_transform_non_ohe(model, y_bar):
+	designer = Ledidi(model, shape=(4, 12), batch_size=4, verbose=False)
+	X = torch.full((1, 4, 12), 0.25)
+	with assert_raises(ValueError):
+		designer.fit_transform(X, y_bar)
+
+
+def test_ledidi_fit_transform_y_bar_bad_leading_dim(model, X):
+	designer = Ledidi(model, shape=(4, 12), batch_size=4, verbose=False)
+	y_bar = torch.tensor([[5.0, -5.0, 0.0], [5.0, -5.0, 0.0]])
+	with assert_raises(ValueError):
+		designer.fit_transform(X, y_bar)
+
+
+def test_ledidi_fit_transform_allows_N(model, X, y_bar):
+	# An all-zeroes (unknown) column is a valid input and must not be rejected.
+	designer = Ledidi(model, shape=(4, 12), batch_size=4, max_iter=10,
+		random_state=0, verbose=False)
+	X = torch.clone(X)
+	X[0, :, 0] = 0.0
+	designer.fit_transform(X, y_bar)
+
+
+###
+# ledidi() wrapper -- sequence validation
+
+
+def test_ledidi_wrapper_non_ohe(model, y_bar):
+	X = torch.full((1, 4, 12), 0.25)
+	with assert_raises(ValueError):
+		ledidi(model, X, y_bar, device='cpu', verbose=False)
+
+
+def test_ledidi_wrapper_bad_X_shape(model, y_bar):
+	X = torch.zeros(4, 12)
+	with assert_raises(ValueError):
+		ledidi(model, X, y_bar, device='cpu', verbose=False)
+
+
+def test_ledidi_wrapper_non_tensor_y_bar(model, X):
+	with assert_raises(ValueError):
+		ledidi(model, X, [1.0, 2.0, 3.0], device='cpu', verbose=False)

@@ -7,7 +7,7 @@ name = "ledidi"
 dynamic = ["version"]
 description = "Ledidi is an optimization approach for designing edits to biological sequences."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
     { name = "Jacob Schreiber", email = "jmschreiber91@gmail.com" },
@@ -15,18 +15,18 @@ authors = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "torch >= 1.9.0",
+    "torch >= 2.0",
     "numpy",
     "pandas",
     "matplotlib",
     "logomaker",
+    "tangermeme >= 1.2.0",
 ]
 
 [project.optional-dependencies]

@@ -3,7 +3,9 @@
 #          adapted from code written by Yang Lu
 
 import time
+
 import torch
+from tangermeme.utils import _validate_input
 
 
 def _gumbel_softmax_hard(logits, tau, dim, generator):
@@ -124,13 +126,13 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 		from the given model. If a list is provided then each item in the list must
 		have those properties.
 	
-	n_repeats: int, optional
+	n_repeats: int, positive, optional
 		The number of times to run the Ledidi procedure. If 1, do not include this
 		as a dimension in the returned blob of sequences. If above 1, include this
 		as the first or second dimension, depending on whether an affinity catalog
 		is being designed (second if so, first if not). Default is 1.
 	
-	n_samples: int or None, optional
+	n_samples: int or None, positive, optional
 		The number of samples to draw from Ledidi after the optimization process.
 		If None, draw one batch as defined by `batch_size`. Otherwise, draw the
 		number of sequences specified.
@@ -180,12 +182,17 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 	if n_samples is not None and (not isinstance(n_samples, int) or n_samples <= 0):
 		raise ValueError("n_samples must be a positive integer, not `{}`".format(
 			n_samples))
-	
+
+	_validate_input(X, "X", shape=(1, -1, -1), ohe=True, allow_N=True)
+
 	if not isinstance(y_bar, list):
 		y_bar = [y_bar]
-	
+
+	for i, y_bar_i in enumerate(y_bar):
+		_validate_input(y_bar_i, "y_bar" if len(y_bar) == 1 else "y_bar[{}]".format(i))
+
 	ny = len(y_bar)
-	
+
 	X = X.to(device)
 	X_bar = [[] for i in range(ny)]
 	designers = [[] for i in range(ny)]
@@ -261,7 +268,7 @@ class Ledidi(torch.nn.Module):
         A model to use as an oracle that will be frozen as a part of the
         Ledidi procedure.
 
-    shape: tuple of two integers
+    shape: tuple of two positive integers
         The number of categories and the number of positions, respectively,
         in the sequence to be edited. For nucleotides this might be (4, 1000).
 
@@ -288,34 +295,35 @@ class Ledidi(torch.nn.Module):
         sharper, i.e., more closely match the argmax of each position.
         Default is 1.
 
-    l: float, positive, optional
+    l: float, non-negative, optional
         The mixing weight parameter between the input loss and the output loss,
         applied to the input loss. The smaller this value is the more important
-        it is that the output loss is minimized. Default is 0.1.
+        it is that the output loss is minimized. A value of 0 disables the input
+        loss entirely. Default is 0.1.
 
-    batch_size: int, optional
+    batch_size: int, positive, optional
         The number of sequences to generate at each step and average loss over.
         Default is 16.
 
-    max_iter: int, optional
+    max_iter: int, positive, optional
         The maximum number of iterations to continue generating samples.
         Default is 1000.
 
-    early_stopping_iter: int, optional
+    early_stopping_iter: int, positive, optional
         The number of consecutive iterations without an improvement in the total
         loss to allow before stopping the optimization early. Default is 100.
 
-    report_iter: int, optional
+    report_iter: int, positive, optional
         The number of iterations to perform before reporting results of the
         optimization. Default is 100.
 
-    lr: float, optional
+    lr: float, positive, optional
         The learning rate of the procedure. Default is 1.0.
 
-    input_mask: torch.Tensor or None, shape=(shape[-1],)
-        A mask where 1 indicates what positions cannot be edited. This will 
-        set the initial weights mask to -inf at those positions. If None, no 
-        positions are masked out. Default is None.
+    input_mask: torch.Tensor or None, shape=(shape[-1],), dtype=bool
+        A boolean mask where True indicates what positions cannot be edited.
+        This will set the initial weights mask to -inf at those positions. If
+        None, no positions are masked out. Default is None.
 
     initial_weights: torch.Tensor or None, shape=(1, shape[0], shape[1])
         Initial weights to use in the weight matrix to specify priors in the
@@ -323,7 +331,7 @@ class Ledidi(torch.nn.Module):
         that certain edits are proposed, negative values mean less likely that
         those edits are proposed.
 
-    eps: float, optional
+    eps: float, positive, optional
         The epsilon to add to the one-hot encoding. Because the first step
         of the procedure is to take log(X + eps) the smaller eps is the
         higher a value in the design weight needs to be achieved before
@@ -354,7 +362,56 @@ class Ledidi(torch.nn.Module):
         lr=1.0, input_mask=None, initial_weights=None, eps=1e-4,
         return_history=False, verbose=True, random_state=None):
         super().__init__()
-        
+
+        if not isinstance(model, torch.nn.Module):
+            raise TypeError("model must be a torch.nn.Module, not `{}`".format(
+                type(model)))
+
+        if len(shape) != 2 or any(not isinstance(s, int) or s <= 0
+            for s in shape):
+            raise ValueError("shape must be a tuple of two positive integers, "
+                "not `{}`".format(tuple(shape)))
+
+        if target is not None and not isinstance(target, int):
+            raise TypeError("target must be an integer or None, not `{}`".format(
+                type(target)))
+
+        if tau <= 0:
+            raise ValueError("tau must be positive, not `{}`".format(tau))
+
+        if l < 0:
+            raise ValueError("l must be non-negative, not `{}`".format(l))
+
+        if not isinstance(batch_size, int) or batch_size <= 0:
+            raise ValueError("batch_size must be a positive integer, not "
+                "`{}`".format(batch_size))
+
+        if not isinstance(max_iter, int) or max_iter <= 0:
+            raise ValueError("max_iter must be a positive integer, not "
+                "`{}`".format(max_iter))
+
+        if not isinstance(early_stopping_iter, int) or early_stopping_iter <= 0:
+            raise ValueError("early_stopping_iter must be a positive integer, "
+                "not `{}`".format(early_stopping_iter))
+
+        if not isinstance(report_iter, int) or report_iter <= 0:
+            raise ValueError("report_iter must be a positive integer, not "
+                "`{}`".format(report_iter))
+
+        if lr <= 0:
+            raise ValueError("lr must be positive, not `{}`".format(lr))
+
+        if eps <= 0:
+            raise ValueError("eps must be positive, not `{}`".format(eps))
+
+        if input_mask is not None:
+            _validate_input(input_mask, "input_mask", shape=(shape[-1],),
+                dtype=torch.bool)
+
+        if initial_weights is not None:
+            _validate_input(initial_weights, "initial_weights",
+                shape=(1, shape[0], shape[1]))
+
         for param in model.parameters():
             param.requires_grad = False
             
@@ -413,6 +470,9 @@ class Ledidi(torch.nn.Module):
             passed in.
         """
 
+        _validate_input(X, "X", shape=(1, self.weights.shape[1],
+            self.weights.shape[2]))
+
         logits = torch.log(X + self.eps) + self.weights
         logits = logits.expand(self.batch_size, *(-1 for i in range(X.ndim-1)))
 
@@ -458,8 +518,16 @@ class Ledidi(torch.nn.Module):
             passed in.
         """
 
+        _validate_input(X, "X", shape=(1, self.weights.shape[1],
+            self.weights.shape[2]), ohe=True, allow_N=True)
+
+        _validate_input(y_bar, "y_bar")
+        if y_bar.shape[0] != 1:
+            raise ValueError("y_bar must have a leading dimension of size 1, "
+                "but has shape {}".format(tuple(y_bar.shape)))
+
         optimizer = torch.optim.AdamW((self.weights,), lr=self.lr)
-        history = {'edits': [], 'input_loss': [], 'output_loss': [], 
+        history = {'edits': [], 'input_loss': [], 'output_loss': [],
             'total_loss': [], 'batch_size': self.batch_size}
 
         if self.input_mask is not None:
