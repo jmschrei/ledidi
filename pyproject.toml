@@ -34,6 +34,12 @@ dev = [
     "pytest",
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "gpu: requires a CUDA device; deselected by default, run with `-m gpu`",
+]
+addopts = "-m 'not gpu'"
+
 [project.urls]
 Homepage = "https://github.com/jmschrei/ledidi"
 Documentation = "https://ledidi.readthedocs.io/en/latest/"
