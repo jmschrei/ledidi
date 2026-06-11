@@ -319,6 +319,19 @@ def test_ledidi_fit_transform_history(model, X, y_bar):
 		assert len(history[key]) == 50
 
 
+def test_ledidi_fit_transform_verbose_logs(model, X, y_bar, capsys):
+	# verbose=True prints the initial, periodic, and final loss lines. report_iter
+	# is small so the periodic branch is hit, guarding the log format strings.
+	designer = Ledidi(model, shape=(4, 12), batch_size=4, max_iter=3,
+		report_iter=1, random_state=0, verbose=True)
+	designer.fit_transform(X, y_bar)
+
+	out = capsys.readouterr().out
+	assert "iter=I" in out
+	assert "iter=1" in out
+	assert "iter=F" in out
+
+
 def test_ledidi_fit_transform_no_improvement_fallback(model, X):
 	# With a target equal to the current prediction and a huge input penalty,
 	# no edit can lower the total loss, so the designer returns the original

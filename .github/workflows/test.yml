@@ -28,4 +28,4 @@ jobs:
       - name: Run the test suite
         run: |
           source .venv/bin/activate
-          python -m pytest tests/ -v
+          python -m pytest tests/ --cov=ledidi --cov-branch --cov-report=term-missing --cov-fail-under=100 -v
