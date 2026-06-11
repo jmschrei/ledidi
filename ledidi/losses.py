@@ -2,6 +2,7 @@
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 
 import torch
+from tangermeme.utils import _validate_input
 
 
 class MinGap():
@@ -33,10 +34,18 @@ class MinGap():
 		A boolean mask over the `n` outputs from the underlying predictive model.
 		True marks an output as on-target, i.e., one whose value should be
 		maximized, and False marks an output as off-target, i.e., one whose value
-		should be minimized.
+		should be minimized. It must contain at least one on-target (True) and one
+		off-target (False) output, since the loss takes a minimum over the former
+		and a maximum over the latter.
 	"""
 
 	def __init__(self, in_mask):
+		_validate_input(in_mask, "in_mask", dtype=torch.bool)
+
+		if bool(in_mask.all()) or not bool(in_mask.any()):
+			raise ValueError("in_mask must contain at least one on-target "
+				"(True) and one off-target (False) output")
+
 		self.in_mask = in_mask
 
 	def __call__(self, y_hat, y_bar):

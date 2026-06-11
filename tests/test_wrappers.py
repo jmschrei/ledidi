@@ -93,3 +93,22 @@ def test_designwrapper_gradient_flows(X):
 	wrapper(X).sum().backward()
 	assert X.grad is not None
 	assert X.grad.shape == X.shape
+
+
+###
+# DesignWrapper -- input validation
+
+
+def test_designwrapper_single_model_rejected():
+	with pytest.raises(TypeError):
+		DesignWrapper(SumModel())
+
+
+def test_designwrapper_empty_rejected():
+	with pytest.raises(ValueError):
+		DesignWrapper([])
+
+
+def test_designwrapper_non_module_member_rejected():
+	with pytest.raises(TypeError):
+		DesignWrapper([SumModel(), "not a model"])

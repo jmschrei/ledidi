@@ -6,6 +6,23 @@ Release History
 ===============
 
 
+Version 2.2.0 (unreleased)
+==========================
+
+Highlights
+----------
+
+	- Hardened inputs across the library: :func:`ledidi.ledidi`,
+	  :class:`ledidi.Ledidi`, :func:`ledidi.pruning.greedy_pruning`,
+	  :class:`ledidi.wrappers.DesignWrapper`, and :func:`ledidi.losses.MinGap`
+	  now validate their arguments and raise informative errors for malformed
+	  inputs (non-one-hot sequences, shape and dtype mismatches, non-positive
+	  hyperparameters, and so on) rather than failing deep inside the optimizer.
+	- Tensor validation reuses ``tangermeme.utils._validate_input``, which is now
+	  a dependency.
+	- Raised the minimum supported Python to 3.10 and the minimum PyTorch to 2.0.
+
+
 Version 2.1.0
 =============
 
