@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/ledidi.svg)](https://pypi.org/project/ledidi/)
 [![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/ledidi/)
 [![Tests](https://github.com/jmschrei/ledidi/actions/workflows/test.yml/badge.svg)](https://github.com/jmschrei/ledidi/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/jmschrei/ledidi/actions/workflows/test.yml)
 [![Documentation Status](https://readthedocs.org/projects/ledidi/badge/?version=latest)](https://ledidi.readthedocs.io/en/latest/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/jmschrei/ledidi/blob/master/LICENSE)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/ledidi.svg)](https://pepy.tech/projects/Ledidi)
@@ -247,7 +248,7 @@ Worked examples as Jupyter notebooks (also rendered on the [documentation site](
 
 Ledidi is research software under active development. The broad direction, roughly in order of priority:
 
-1. **Hardening and usability.** Expand the test suite and coverage, improve robustness and error messages, and grow the tutorials so that going from a trained model to a finished design is straightforward and hard to get wrong.
+1. ✅ **Hardening and usability.** Expand the test suite and coverage, improve robustness and error messages, and grow the tutorials so that going from a trained model to a finished design is straightforward and hard to get wrong.
 
 2. **Validation, trust, and benchmarking.** Gradient-based design can exploit an oracle and produce sequences that score well but are not biologically meaningful. We want first-class evaluation built in: round-tripping designs through independent held-out models, attribution-based checks that the intended motifs were actually created, realism checks against natural sequence, and a reproducible benchmark across many oracles.
 

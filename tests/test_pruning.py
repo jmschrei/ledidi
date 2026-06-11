@@ -63,6 +63,15 @@ def test_greedy_pruning_above_threshold_full_pruning(X, X_hat):
 	assert_array_almost_equal(X_m.numpy(), X.numpy(), 4)
 
 
+def test_greedy_pruning_verbose_logs(X, X_hat, capsys):
+	# verbose=True prints a line for each pruned edit; threshold=10 prunes all
+	# three, so the log branch fires and its format string is exercised.
+	greedy_pruning(SumModel(), X, X_hat, threshold=10, verbose=True)
+
+	out = capsys.readouterr().out
+	assert "# Pruned" in out
+
+
 def test_greedy_pruning_cumulative_threshold(X, X_hat):
 	# Because the deviation is cumulative (2, 4, 6, ...) a threshold of 3 only
 	# admits the first revert (score 2); the second would score 4 > 3 and stops
