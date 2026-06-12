@@ -1,6 +1,21 @@
 # losses.py
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 
+"""Output loss functions for output-specific design.
+
+The default output loss in Ledidi is an ``MSELoss`` that drives every model
+output toward an explicit target value. That works well when you know exactly
+what each output should be, but some design goals are more naturally phrased as
+a contrast between groups of outputs rather than as fixed targets.
+
+This module collects such alternative losses. The first is :class:`MinGap`, the
+min-gap loss of Gosai et al. for designing output-specific (e.g., cell
+type-specific) elements by maximizing the gap between the weakest on-target
+output and the strongest off-target output, with no target values required. Any
+callable with the signature ``f(y_hat, y_bar)`` can be passed to ``ledidi`` via
+``output_loss``, so these classes are examples as much as they are batteries.
+"""
+
 import torch
 from tangermeme.utils import _validate_input
 

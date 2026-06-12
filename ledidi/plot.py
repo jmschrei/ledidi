@@ -1,6 +1,18 @@
 # plot.py
 # Author: Jacob Schreiber <jmschreiber91@gmail.com>
 
+"""Plotting helpers for inspecting a design run.
+
+These utilities visualize two things you often want to look at after running
+Ledidi: when and where edits were proposed, and how the final edits relate to
+the motifs they create. :func:`plot_history` takes the history dict returned by
+``return_history=True`` and plots the position of each proposed edit over the
+course of the optimization, and :func:`plot_edits` overlays the proposed edits
+on a per-base attribution track. They are thin matplotlib helpers; for
+attribution computation and sequence-level plotting more broadly, see
+`tangermeme <https://github.com/jmschrei/tangermeme>`_.
+"""
+
 import numpy
 import torch
 import pandas
@@ -71,7 +83,7 @@ def plot_edits(X_orig, X_attrs, colors='darkorange', **kwargs):
 		sequence being prepended as the first track (its entry is unused since
 		that track has no edits). Default is darkorange.
 	
-	**kwargs: args, optional
+	``**kwargs``: args, optional
 		Any additional arguments to pass into plt.figure.
 	"""
 	

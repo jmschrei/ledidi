@@ -235,14 +235,17 @@ For the Quickstart example this prints just two edits, the ones that complete th
 
 ### Tutorials
 
-Worked examples as Jupyter notebooks (also rendered on the [documentation site](https://ledidi.readthedocs.io/en/latest/)). Several use BPNet oracle models available at https://zenodo.org/records/14604495.
+Worked examples as Jupyter notebooks (also rendered on the [documentation site](https://ledidi.readthedocs.io/en/latest/)). Tutorial 0 and 8 run anywhere on a CPU with no downloads; the rest use BPNet oracle models available at https://zenodo.org/records/14604495.
 
+0. [A First Design](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_0_-_Getting_Started.ipynb)
 1. [Design of Protein Binding Sites](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_1_-_Design_of_Protein_Binding_Sites.ipynb)
 2. [Constraints and Priors](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_2_-_Constraints_and_Priors.ipynb)
 3. [In-Painting](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_3_-_In-Painting.ipynb)
 4. [Multiple Models](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_4_-_Multiple_Models.ipynb)
 5. [Affinity Catalogs](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_5_-_Affinity_Catalogs.ipynb)
 6. [Custom Loss Functions](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_6_-_Custom_Loss_Functions.ipynb)
+7. [Validating Your Designs](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_7_-_Validating_Your_Designs.ipynb)
+8. [The Ledidi Object](https://github.com/jmschrei/ledidi/blob/master/docs/tutorials/Tutorial_8_-_The_Ledidi_Object.ipynb)
 
 ### Roadmap
 
