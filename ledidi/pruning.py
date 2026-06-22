@@ -1,6 +1,21 @@
 # pruning.py
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 
+"""Post-hoc pruning of designed edits.
+
+Ledidi already penalizes the number of edits during optimization, but a fitted
+design often still carries edits that contribute only marginally to the output.
+This module provides :func:`greedy_pruning`, which trims such edits after the
+fact: it repeatedly reverts the single edit whose removal moves the model output
+the least, stopping once reverting the next one would push the prediction past a
+user-supplied threshold away from the fully edited prediction.
+
+Pruning is useful when you want the smallest set of edits that still achieves
+the design goal, or to expose the trade-off between edit count and output by
+sweeping the threshold. It operates on already-designed sequences and is
+independent of how those edits were produced.
+"""
+
 import time
 
 import torch

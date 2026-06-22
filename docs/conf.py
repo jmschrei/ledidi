@@ -18,11 +18,13 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ledidi'
-copyright = '2025, Jacob Schreiber'
+copyright = '2026, Jacob Schreiber'
 author = 'Jacob Schreiber'
 
-# The full version, including alpha/beta/rc tags
-release = 'v2.1.0'
+# The full version, including alpha/beta/rc tags. Read from the installed
+# package so the docs never drift from ledidi/__init__.py:__version__.
+from ledidi import __version__
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -30,10 +32,11 @@ release = 'v2.1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'nbsphinx']
+extensions = ['sphinx.ext.autodoc', 'nbsphinx']
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# Notebooks ship with their outputs already saved (the tutorials require a GPU
+# and model downloads), so never re-execute them at build time.
+nbsphinx_execute = 'never'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

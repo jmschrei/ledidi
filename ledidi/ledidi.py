@@ -2,6 +2,24 @@
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 #          adapted from code written by Yang Lu
 
+"""The core Ledidi design engine.
+
+Ledidi turns any frozen, differentiable sequence-to-function model into an
+editor of categorical sequences (DNA, RNA, protein). Rather than updating model
+weights to fit data, it holds the model fixed and updates the *data*: it learns
+a continuous weight matrix from which one-hot edits to a template sequence are
+sampled through a Gumbel-softmax straight-through estimator, optimizing the
+edits so the model's prediction matches a desired output while keeping the
+number of edits small.
+
+This module provides the two entry points most users need. :func:`ledidi` is a
+convenience wrapper that handles device placement, repeats, affinity catalogs,
+and post-hoc sampling, and is what nearly all of the tutorials call.
+:class:`Ledidi` is the underlying ``torch.nn.Module`` optimizer; you only need
+it directly when you want to fit the weight matrix once and then sample edited
+sequences from its ``forward`` repeatedly.
+"""
+
 import time
 
 import torch
@@ -120,7 +138,7 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 		This sequence is then expanded out to the desired batch size to generate a 
 		batch of edits.
 
-	y_bar: torch.Tensor or list, shape=(1, *)
+	y_bar: torch.Tensor or list, ``shape=(1, *)``
 		The desired output from the model. Any shape for this tensor is permissable
 		so long as the `output_loss` function can handle comparing it to the output 
 		from the given model. If a list is provided then each item in the list must
@@ -159,13 +177,13 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 		entries and repeats remain independent of one another while still being
 		reproducible. Default is None.
 
-	**kwargs
+	``**kwargs``
 		Any additional arguments to be passed into the Ledidi object.
 	
 	
 	Returns
 	-------
-	y: torch.Tensor, shape=(*ny, *n_repeats, n_samples, n_channels, length)
+	y: torch.Tensor, ``shape=(*ny, *n_repeats, n_samples, n_channels, length)``
 		A tensor containing a batch of one-hot encoded sequences which may contain 
 		one or more edits compared to the sequence that was passed in. If a list of
 		`y_bar` values has been passed in, indicating that one would like to design
@@ -504,7 +522,7 @@ class Ledidi(torch.nn.Module):
             edits for. This sequence is then expanded out to the desired batch 
             size to generate a batch of edits.
 
-        y_bar: torch.Tensor, shape=(1, *)
+        y_bar: torch.Tensor, ``shape=(1, *)``
             The desired output from the model. Any shape for this tensor is
             permissable so long as the `output_loss` function can handle
             comparing it to the output from the given model.

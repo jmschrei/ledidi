@@ -19,8 +19,12 @@ Highlights
 	  inputs (non-one-hot sequences, shape and dtype mismatches, non-positive
 	  hyperparameters, and so on) rather than failing deep inside the optimizer.
 	- Tensor validation reuses ``tangermeme.utils._validate_input``, which is now
-	  a dependency.
+	  a dependency. The expected tensor formats and the errors raised for
+	  malformed inputs are documented on the :doc:`input_output` page, with the
+	  most common messages and fixes collected in the :doc:`faq`.
 	- Raised the minimum supported Python to 3.10 and the minimum PyTorch to 2.0.
+	- Expanded the documentation: a runnable :doc:`getting_started` walkthrough, a
+	  :doc:`parameters` reference, and the input/output and FAQ pages above.
 
 
 Version 2.1.0

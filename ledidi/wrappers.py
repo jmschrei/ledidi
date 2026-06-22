@@ -1,6 +1,22 @@
 # wrappers.py
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 
+"""Wrappers for combining several oracle models into one designer.
+
+Many designs care about more than one property at once -- raising the binding of
+one factor while holding accessibility fixed, say -- and the relevant models are
+often separate. This module provides :class:`DesignWrapper`, which takes a list
+of models, runs the input sequence through each, and concatenates their
+predictions into a single output tensor. The result behaves like one multi-task
+model, so it can be handed straight to ``ledidi`` with a ``y_bar`` that has one
+target per concatenated output.
+
+For reshaping or slicing the inputs and outputs of an individual model (e.g.,
+selecting a few tasks from a massively multi-task model, or trimming a sequence
+to a model's fixed input width), see the wrapper utilities and the wrappers
+tutorial in `tangermeme <https://github.com/jmschrei/tangermeme>`_.
+"""
+
 import torch
 
 
