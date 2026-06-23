@@ -18,6 +18,9 @@ Highlights
 	  now validate their arguments and raise informative errors for malformed
 	  inputs (non-one-hot sequences, shape and dtype mismatches, non-positive
 	  hyperparameters, and so on) rather than failing deep inside the optimizer.
+	- Fixed :func:`ledidi.pruning.greedy_pruning` to accept a ``threshold`` of 0
+	  (which reverts no edits) again; the input hardening had incorrectly
+	  rejected it as non-positive.
 	- Tensor validation reuses ``tangermeme.utils._validate_input``, which is now
 	  a dependency. The expected tensor formats and the errors raised for
 	  malformed inputs are documented on the :doc:`input_output` page, with the
