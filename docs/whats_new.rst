@@ -31,6 +31,10 @@ Highlights
 	- Added :func:`ledidi.plot.plot_loss` for drawing the input and output loss
 	  curves from a returned history, and gave :func:`ledidi.plot.plot_edits` an
 	  ``axs`` argument so its tracks can be drawn into an existing layout.
+	- Reimplemented :func:`ledidi.plot.plot_edits` on top of
+	  ``tangermeme.plot.plot_logo`` (using its per-position ``color`` argument to
+	  highlight the edited bases) rather than ``logomaker``. ``logomaker`` and
+	  ``pandas`` are no longer dependencies. This requires ``tangermeme >= 1.3.0``.
 
 
 Version 2.1.0
