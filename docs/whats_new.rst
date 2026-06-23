@@ -25,6 +25,9 @@ Highlights
 	- Raised the minimum supported Python to 3.10 and the minimum PyTorch to 2.0.
 	- Expanded the documentation: a runnable :doc:`getting_started` walkthrough, a
 	  :doc:`parameters` reference, and the input/output and FAQ pages above.
+	- Added :func:`ledidi.plot.plot_loss` for drawing the input and output loss
+	  curves from a returned history, and gave :func:`ledidi.plot.plot_edits` an
+	  ``axs`` argument so its tracks can be drawn into an existing layout.
 
 
 Version 2.1.0

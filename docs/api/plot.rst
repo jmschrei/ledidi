@@ -2,4 +2,4 @@ plot
 ====
 
 .. automodule:: ledidi.plot
-	:members: plot_edits, plot_history
+	:members: plot_loss, plot_history, plot_edits

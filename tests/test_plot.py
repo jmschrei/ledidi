@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from ledidi.plot import plot_loss
 from ledidi.plot import plot_history
 from ledidi.plot import plot_edits
 
@@ -26,7 +27,9 @@ def history():
 		(torch.tensor([0, 1]), torch.tensor([2, 3]), torch.tensor([5, 8])),
 		(torch.tensor([0, 2, 3]), torch.tensor([1, 0, 2]), torch.tensor([3, 6, 9]))
 	]
-	return {'edits': edits, 'batch_size': 4}
+	return {'edits': edits, 'batch_size': 4,
+		'input_loss': [3.0, 2.0], 'output_loss': [4.0, 1.0],
+		'total_loss': [4.3, 1.2]}
 
 
 @pytest.fixture
@@ -45,6 +48,32 @@ def X_attrs():
 
 
 ###
+
+
+def test_plot_loss_runs(history):
+	plt.figure()
+	ax, ax2 = plot_loss(history)
+	assert isinstance(ax, plt.Axes)
+	assert isinstance(ax2, plt.Axes)
+	# One line per loss, each on its own axis.
+	assert len(ax.lines) == 1
+	assert len(ax2.lines) == 1
+
+
+def test_plot_loss_labels(history):
+	plt.figure()
+	ax, ax2 = plot_loss(history)
+	assert ax.get_xlabel() == "Iteration"
+	assert ax.get_ylabel() == "Output Loss"
+	assert ax2.get_ylabel() == "Input Loss"
+
+
+def test_plot_loss_accepts_ax(history):
+	_, ax = plt.subplots()
+	out, out2 = plot_loss(history, ax=ax)
+	# The output loss is drawn on the axis we passed in.
+	assert out is ax
+	assert out2 is not ax
 
 
 def test_plot_history_runs(history):
@@ -85,3 +114,11 @@ def test_plot_edits_color_list(X_orig, X_attrs):
 def test_plot_edits_kwargs(X_orig, X_attrs):
 	axs = plot_edits(X_orig, X_attrs, figsize=(4, 6))
 	assert len(axs) == 3
+
+
+def test_plot_edits_accepts_axs(X_orig, X_attrs):
+	_, axs = plt.subplots(X_attrs.shape[0] + 1, 1)
+	out = plot_edits(X_orig, X_attrs, axs=axs)
+	# The same axes we passed in are drawn into and returned.
+	assert out is axs
+	assert axs[-1].get_xlabel() == "Position"
