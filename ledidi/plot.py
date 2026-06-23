@@ -16,9 +16,9 @@ see `tangermeme <https://github.com/jmschrei/tangermeme>`_.
 
 import numpy
 import torch
-import pandas
-import logomaker
 import matplotlib.pyplot as plt
+
+from tangermeme.plot import plot_logo
 
 
 def plot_loss(history, ax=None):
@@ -179,7 +179,6 @@ def plot_edits(X_orig, X_attrs, colors='darkorange', axs=None, **kwargs):
 	n = len(X_attrs)
 	ymin, ymax = X_attrs.min() * 1.1, X_attrs.max() * 1.1
 	ref = (X_attrs[0] != 0).argmax(axis=0)
-	alpha = numpy.array(['A', 'C', 'G', 'T'])
 
 	if axs is None:
 		plt.figure(**kwargs)
@@ -189,14 +188,10 @@ def plot_edits(X_orig, X_attrs, colors='darkorange', axs=None, **kwargs):
 		c = colors if isinstance(colors, str) else colors[i]
 
 		idx = (X != 0).argmax(axis=0)
-		edited = ''.join(alpha[j] if j != r else 'N' for r, j in zip(ref, idx))
+		position_colors = ['dimgrey' if j == r else c for r, j in zip(ref, idx)]
 
-		df = pandas.DataFrame(X.T, columns=['A', 'C', 'G', 'T'])
-		df.index.name = 'pos'
-
-		logo = logomaker.Logo(df, ax=ax, color_scheme='dimgrey')
-		logo.style_spines(visible=False)
-		logo.style_glyphs_in_sequence(sequence=edited, color=c)
+		plot_logo(X, ax=ax, color=position_colors, min_height_pct=None)
+		ax.spines['left'].set_visible(False)
 
 		ax.set_ylim(ymin, ymax)
 		ax.grid(False)
