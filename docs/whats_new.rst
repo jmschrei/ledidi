@@ -18,6 +18,9 @@ Highlights
 	  now validate their arguments and raise informative errors for malformed
 	  inputs (non-one-hot sequences, shape and dtype mismatches, non-positive
 	  hyperparameters, and so on) rather than failing deep inside the optimizer.
+	- Fixed :func:`ledidi.pruning.greedy_pruning` to accept a ``threshold`` of 0
+	  (which reverts no edits) again; the input hardening had incorrectly
+	  rejected it as non-positive.
 	- Tensor validation reuses ``tangermeme.utils._validate_input``, which is now
 	  a dependency. The expected tensor formats and the errors raised for
 	  malformed inputs are documented on the :doc:`input_output` page, with the
@@ -25,6 +28,9 @@ Highlights
 	- Raised the minimum supported Python to 3.10 and the minimum PyTorch to 2.0.
 	- Expanded the documentation: a runnable :doc:`getting_started` walkthrough, a
 	  :doc:`parameters` reference, and the input/output and FAQ pages above.
+	- Added :func:`ledidi.plot.plot_loss` for drawing the input and output loss
+	  curves from a returned history, and gave :func:`ledidi.plot.plot_edits` an
+	  ``axs`` argument so its tracks can be drawn into an existing layout.
 
 
 Version 2.1.0

@@ -121,10 +121,16 @@ def test_greedy_pruning_invalid_model(X, X_hat):
 		greedy_pruning("not a model", X, X_hat)
 
 
-@pytest.mark.parametrize("threshold", [0, -1.0])
+@pytest.mark.parametrize("threshold", [-1.0, -0.5])
 def test_greedy_pruning_invalid_threshold(X, X_hat, threshold):
 	with pytest.raises(ValueError):
 		greedy_pruning(SumModel(), X, X_hat, threshold=threshold)
+
+
+def test_greedy_pruning_threshold_zero(X, X_hat):
+	# A threshold of 0 is valid and reverts no edits, returning X_hat unchanged.
+	X_m = greedy_pruning(SumModel(), X, X_hat, threshold=0)
+	assert_array_almost_equal(X_m.numpy(), X_hat.numpy(), 4)
 
 
 def test_greedy_pruning_invalid_target(X, X_hat):

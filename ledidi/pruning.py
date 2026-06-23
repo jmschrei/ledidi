@@ -49,9 +49,10 @@ def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 		A tensor of the same shape as `X` except that it contains the proposed
 		edits.
 
-	threshold: float, positive, optional
+	threshold: float, non-negative, optional
 		A threshold on the maximum change in model output that removing an edit
-		can have. Default is 1.
+		can have. A threshold of 0 reverts no edits, leaving the input edits
+		unchanged. Default is 1.
 
 	target: int or None
 		When given a multi-task model, the target to slice out of the model
@@ -72,8 +73,9 @@ def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 		raise TypeError("model must be a torch.nn.Module, not `{}`".format(
 			type(model)))
 
-	if threshold <= 0:
-		raise ValueError("threshold must be positive, not `{}`".format(threshold))
+	if threshold < 0:
+		raise ValueError("threshold must be non-negative, not `{}`".format(
+			threshold))
 
 	if target is not None and not isinstance(target, int):
 		raise TypeError("target must be an integer or None, not `{}`".format(
