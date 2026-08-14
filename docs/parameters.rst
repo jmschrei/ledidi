@@ -25,7 +25,7 @@ Most designs only require tuning a couple of knobs. The parameters below are pas
      - The loss comparing the model's prediction to ``y_bar``. Swap in any callable ``f(y_hat, y_bar)``.
    * - ``tau``
      - ``1``
-     - Gumbel-softmax temperature; higher is sharper (closer to a hard argmax).
+     - Gumbel-softmax temperature. It affects only the straight-through gradient, not the sampled sequence, which is one-hot at every ``tau``. Rarely worth tuning; see the note below.
    * - ``batch_size``
      - ``16``
      - Sequences sampled and averaged per iteration.

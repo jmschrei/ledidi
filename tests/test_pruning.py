@@ -9,6 +9,7 @@ from ledidi.pruning import greedy_pruning
 from .toy_models import SumModel
 
 from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_raises
 
 
 def _one_hot_from_chars(chars):
@@ -149,3 +150,26 @@ def test_greedy_pruning_shape_mismatch(X):
 	X_hat[0, 0, :] = 1.0
 	with pytest.raises(ValueError):
 		greedy_pruning(SumModel(), X, X_hat)
+
+
+###
+# target validation
+#
+# An empty output slice made every candidate score 0.0, which is below any
+# threshold, so greedy_pruning reverted every edit and returned the template.
+
+
+def test_greedy_pruning_negative_target_raises(X, X_hat):
+	with assert_raises(ValueError):
+		greedy_pruning(SumModel(), X, X_hat, target=-1)
+
+
+def test_greedy_pruning_out_of_range_target_raises(X, X_hat):
+	# SumModel returns one value per channel, so target=7 slices nothing.
+	with assert_raises(ValueError):
+		greedy_pruning(SumModel(), X, X_hat, target=7)
+
+
+def test_greedy_pruning_bool_target_raises(X, X_hat):
+	with assert_raises(TypeError):
+		greedy_pruning(SumModel(), X, X_hat, target=True)

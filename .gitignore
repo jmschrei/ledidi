@@ -1,3 +1,4 @@
+CLAUDE.md
 claude_comments/
 
 # Standalone gumbel-softmax equivalence verification script
@@ -11,3 +12,6 @@ __pycache__/
 build/
 dist/
 .venv/
+
+# Test artifacts
+.coverage

@@ -77,9 +77,15 @@ def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 		raise ValueError("threshold must be non-negative, not `{}`".format(
 			threshold))
 
-	if target is not None and not isinstance(target, int):
+	if target is not None and (isinstance(target, bool)
+		or not isinstance(target, int)):
 		raise TypeError("target must be an integer or None, not `{}`".format(
 			type(target)))
+
+	if target is not None and target < 0:
+		raise ValueError("target must be non-negative, not `{}`. Negative "
+			"indexing is not supported because it selects an empty slice "
+			"rather than counting from the end".format(target))
 
 	_validate_input(X, "X", shape=(1, -1, -1), ohe=True, allow_N=True)
 	_validate_input(X_hat, "X_hat", shape=tuple(X.shape), ohe=True, allow_N=True)
@@ -97,8 +103,12 @@ def greedy_pruning(model, X, X_hat, threshold=1, target=None, verbose=False):
 		target = slice(target, target+1)
 	
 	y_hat = model(X_hat)[:, target]
-	
-	
+
+	if y_hat.shape[1] == 0:
+		raise ValueError("target={} selects no outputs from a model that "
+			"returns {} of them".format(target.start, model(X_hat).shape[1]))
+
+
 	for i in range(n_total):
 		tic = time.time()
 		best_score, best_idx = float("inf"), -1

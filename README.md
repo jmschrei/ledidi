@@ -41,6 +41,22 @@ uv pip install -e ".[dev]"
 
 The test suite runs on CPU with `python -m pytest tests/`.
 
+### Using Ledidi with a coding agent
+
+Ledidi ships a [Claude Code Agent Skill](https://docs.claude.com/en/docs/claude-code/skills) that teaches an agent the design objective, the oracle-model contract, and the footguns that silently produce bad designs. Install it once and it applies in every project:
+
+```
+ledidi-install-skills
+```
+
+This copies the skill into `~/.claude/skills/ledidi` (use `--force` to upgrade after updating Ledidi, or `--print-path` to see the bundled source). It is a router: a short `SKILL.md` plus reference files the agent reads on demand for the topic at hand — the objective and the `l` trade-off, multi-task and multi-model oracles, models whose input window differs from the design field, constraints and priors, in-painting, custom losses, affinity catalogs, pruning, validating designs, and out-of-memory recovery.
+
+Ledidi depends on [tangermeme](https://github.com/jmschrei/tangermeme), which ships its own skill covering attribution, motif scanning, and sequence I/O. Installing both is recommended, since validating a design leans on them:
+
+```
+tangermeme-install-skills
+```
+
 ### Quickstart
 
 Here is a complete, runnable example that uses a tiny parameter-free oracle, so there is nothing to download. The oracle scores how well a sequence matches the AP-1 motif `TGACTCA`, and Ledidi designs the edits that maximize that score.
@@ -174,7 +190,7 @@ Most designs only require tuning a couple of knobs. These are passed straight th
 | `l` | `0.1` | Weight on the edit (input) loss. **The main knob to tune** — lower values prioritize hitting the target output, higher values prioritize making fewer edits. |
 | `target` | `None` | For a multi-task model, the index of the output to design against. `None` uses the whole output. |
 | `output_loss` | `MSELoss()` | The loss comparing the model's prediction to `y_bar`. Swap in any callable `f(y_hat, y_bar)`. |
-| `tau` | `1` | Gumbel-softmax temperature; higher is sharper (closer to a hard argmax). |
+| `tau` | `1` | Gumbel-softmax temperature. Affects only the gradient, not the sampled sequence (which is one-hot at every `tau`). Rarely worth tuning. |
 | `batch_size` | `16` | Sequences sampled and averaged per iteration. |
 | `max_iter` | `1000` | Maximum optimization iterations. |
 | `early_stopping_iter` | `100` | Stop after this many iterations without improvement. |
