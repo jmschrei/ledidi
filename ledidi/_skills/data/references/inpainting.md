@@ -55,9 +55,8 @@ if n_cols:
 
 If you want them left alone, mask them ([masks.md](masks.md)): a masked all-zero
 column comes back all-zero, still `N`, with no `nan` anywhere in the design — so
-masking genuinely preserves `N` runs. Note that any `initial_weights` priors you
-also set will be affected by passing a mask at all
-([masks.md](masks.md)); cropping the region away is the other clean option.
+masking genuinely preserves `N` runs. Cropping the region away is the other clean
+option.
 
 ## The three canonical uses
 

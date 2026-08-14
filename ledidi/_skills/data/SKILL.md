@@ -110,6 +110,6 @@ each with its own file:
   `output_mask=`, `args=`, or `func=` raises `TypeError` rather than being silently
   ignored. Output selection is `target` →
   [multi-task-models.md](references/multi-task-models.md).
-- **Returned designs carry an autograd graph.** Both the default return and the
-  `n_samples` draw come back with `requires_grad=True`; `.detach()` them before
-  holding many, and see [memory-and-oom.md](references/memory-and-oom.md).
+- **Designs from the default return path carry an autograd graph** (`n_samples`
+  draws are detached). `.detach()` before holding many, or before handing them to
+  code that assumes plain tensors → [memory-and-oom.md](references/memory-and-oom.md).

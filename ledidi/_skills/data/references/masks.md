@@ -45,29 +45,16 @@ forbidding *particular characters* rather than whole positions, or forcing a
 character in — is done by building the weight matrix yourself →
 [initial-weights.md](initial-weights.md).
 
-### Footgun: passing `input_mask` erases priors at *every* position
+The template-character restore is scoped to the mask, so `initial_weights` you set
+elsewhere survive untouched — including a prior sitting on a template character.
+Inside the mask, whatever you set is replaced by `-inf`/`0`, because the mask is a
+hard constraint and takes precedence.
 
-Look carefully at the second line above. The `-inf` write is confined to the mask,
-but `self.weights[X.type(torch.bool)] = 0` is **not masked** — it resets the
-template character's channel to `0` across the entire sequence.
-
-So if you pass `input_mask` and `initial_weights` together, any prior you placed on
-a template character is silently discarded, everywhere, not just inside the mask.
-Measured with a uniform prior of `2.0` and positions 0–9 masked on a 60 bp
-template: **60 of 60** template-channel entries came back `0.0`, and position 30 —
-well outside the mask — reads `[2.0, 0.0, 2.0, 2.0]`, with the `0.0` sitting on the
-template's own base.
-
-Two practical consequences:
-
-- Priors on **non-template** characters survive outside the mask; priors on the
-  template character do not survive anywhere. If your prior was "keep preferring
-  what is already here", it is gone.
-- The forced-edit idiom from [initial-weights.md](initial-weights.md) — `-inf` on
-  every character *except* the one you want, including the template's own — is
-  **broken by any `input_mask`**, because the `-inf` you placed on the template
-  character is reset to `0` and that character becomes drawable again. Use one
-  mechanism or the other in a given design, not both.
+Older versions of ledidi applied that restore to the *whole* sequence, which
+silently discarded template-character priors everywhere and broke the forced-edit
+idiom in [initial-weights.md](initial-weights.md) whenever a mask was also passed.
+If you are reading code written against an older release, that is why it may have
+combined the two mechanisms carefully or not at all.
 
 ## Effects worth anticipating
 

@@ -33,9 +33,10 @@ Draws that many sequences after optimization, at almost no extra time cost. Inte
 it calls the designer `n_samples // batch_size + 1` times and truncates, so the
 returned count is exact.
 
-**This is not free in memory.** The draw is not wrapped in `torch.no_grad()`, so every
-call retains an autograd graph and the returned designs carry it. Use option 2 for
-large draws — the measured cost is in [memory-and-oom.md](memory-and-oom.md).
+The draw runs under `torch.no_grad()`, so these designs come back **detached** —
+unlike the default return path, which carries a graph. For very large draws option 2
+is still cheaper, since it lets you move each chunk off the device as you go
+→ [memory-and-oom.md](memory-and-oom.md).
 
 ## Option 2: keep the fitted designer
 

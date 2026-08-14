@@ -82,12 +82,13 @@ In order of likelihood:
 
 1. **The template already predicts `y_bar`.** Check `model(X)` first; the `iter=I`
    log line shows this as an output loss near zero.
-2. **A bad `target`.** A negative or out-of-range `target` silently returns the
-   unedited template → [multi-task-models.md](multi-task-models.md).
-3. **`l` is too high** for the scale of your output loss →
+2. **`l` is too high** for the scale of your output loss →
    [objective.md](objective.md).
-4. **The gradient does not reach the input**, usually a `detach`/`no_grad`/argmax in
-   the model → [oracle-contract.md](oracle-contract.md).
+3. **The gradient does not reach the input**, usually a `detach`/`no_grad`/argmax in
+   the model, or an oracle that is invariant to its input
+   → [oracle-contract.md](oracle-contract.md).
+4. **The oracle cannot represent what you asked for**, so the output loss plateaus
+   well above zero.
 
 ## Related references
 

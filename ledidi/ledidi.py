@@ -233,7 +233,13 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 			
 			if n_samples is not None:
 				n_iter = n_samples // designer.batch_size + 1
-				X_bar_ = torch.cat([designer(X) for _ in range(n_iter)], dim=0)[:n_samples]
+
+				# Drawn under no_grad because these samples are returned to the
+				# caller, not backpropagated through; retaining a graph for each
+				# draw roughly doubles the memory a large `n_samples` needs.
+				with torch.no_grad():
+					X_bar_ = torch.cat([designer(X) for _ in range(n_iter)],
+						dim=0)[:n_samples]
 			
 			X_bar[i].append(X_bar_)
 		
@@ -390,9 +396,15 @@ class Ledidi(torch.nn.Module):
             raise ValueError("shape must be a tuple of two positive integers, "
                 "not `{}`".format(tuple(shape)))
 
-        if target is not None and not isinstance(target, int):
+        if target is not None and (isinstance(target, bool)
+            or not isinstance(target, int)):
             raise TypeError("target must be an integer or None, not `{}`".format(
                 type(target)))
+
+        if target is not None and target < 0:
+            raise ValueError("target must be non-negative, not `{}`. Negative "
+                "indexing is not supported because it selects an empty slice "
+                "rather than counting from the end".format(target))
 
         if tau <= 0:
             raise ValueError("tau must be positive, not `{}`".format(tau))
@@ -551,12 +563,23 @@ class Ledidi(torch.nn.Module):
         if self.input_mask is not None:
             self.weights.requires_grad = False
             self.weights[:, :, self.input_mask] = float("-inf")
-            self.weights[X.type(torch.bool)] = 0
+
+            # Restore the template's own character so masked positions remain
+            # drawable, but only WITHIN the mask -- zeroing it everywhere would
+            # silently discard any prior set on a template character.
+            masked = torch.zeros_like(self.weights, dtype=torch.bool)
+            masked[:, :, self.input_mask] = True
+            self.weights[masked & X.type(torch.bool)] = 0
             self.weights.requires_grad = True
-        
+
         inpainting_mask = X[0].sum(dim=0) == 1
         y_hat = self.model(X)[:, self.target]
-        
+
+        if y_hat.shape[1] == 0:
+            raise ValueError("target={} selects no outputs from a model that "
+                "returns {} of them".format(self.target.start,
+                    self.model(X).shape[1]))
+
         n_iter_wo_improvement = 0
         output_loss = self.output_loss(y_hat, y_bar).item()
 

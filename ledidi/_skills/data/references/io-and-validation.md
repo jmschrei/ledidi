@@ -110,7 +110,9 @@ and see [memory-and-oom.md](memory-and-oom.md) for the memory this costs.
 | `initial_weights` wrong shape | `ValueError` | `(1, n_channels, length)` |
 | `X_hat` shape mismatch in pruning | `ValueError` | must equal `X`'s shape |
 | `model must be a torch.nn.Module` | `TypeError` | wrap it |
-| `target must be an integer or None` | `TypeError` | `int()` a `numpy` integer; no masks or lists |
+| `target must be an integer or None` | `TypeError` | `int()` a `numpy` integer; no masks, lists, or `bool` |
+| `target must be non-negative` | `ValueError` | `-1` is not "the last output" |
+| `target=N selects no outputs from a model that returns M` | `ValueError` | count the outputs after wrapping |
 | `shape must be a tuple of two positive integers` | `ValueError` | `Ledidi(shape=X.shape[-2:])` |
 | `tau`/`lr`/`eps` non-positive | `ValueError` | must be > 0 |
 | `batch_size`/`max_iter`/`early_stopping_iter`/`report_iter` non-positive | `ValueError` | positive integers |
@@ -124,18 +126,17 @@ and see [memory-and-oom.md](memory-and-oom.md) for the memory this costs.
 
 These raise nothing and return plausible-looking results:
 
-- a negative or out-of-range `target` → the unedited template back
-  ([multi-task-models.md](multi-task-models.md))
-- the same in `greedy_pruning` → every edit reverted ([pruning.md](pruning.md))
 - a `y_bar` of shape `(1,)` → broadcasts silently (above)
-- passing `input_mask` → erases template-character priors at every position, and
-  breaks the forced-edit idiom ([masks.md](masks.md))
+- an inverted `input_mask` → protects the region you meant to edit
+  ([masks.md](masks.md))
+- a `target` that does not match how you sliced at design time, in
+  `greedy_pruning` → prunes against the wrong objective ([pruning.md](pruning.md))
 - `initial_weights` mutated in place, so a reused tensor carries the last run's
   learned values ([initial-weights.md](initial-weights.md))
 - a refit `Ledidi` object resuming from its previous best weights
   ([designer-object.md](designer-object.md))
-- an inverted `input_mask` → protects the region you meant to edit
-  ([masks.md](masks.md))
+- a design whose oracle is invariant to its input → a plausible loss and no edits
+  ([oracle-contract.md](oracle-contract.md))
 
 ## Related references
 

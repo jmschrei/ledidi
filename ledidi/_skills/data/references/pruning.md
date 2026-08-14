@@ -43,26 +43,20 @@ Note the threshold is on the change from reverting a **single** edit, not on
 cumulative drift. Many small reverts can move the prediction well past `threshold` in
 total, so check the final prediction rather than assuming a bound.
 
-## Footgun: a bad `target` reverts every edit
+## `target` must match how you sliced during design
 
-An empty output selection makes `torch.abs(y_hat - y_mod).sum()` equal `0.0` for every
-candidate, which is below any positive threshold, so **every edit is pruned** and you
-get the template back. `target=-1` (`slice(-1, 0)`) and any out-of-range index do
-exactly this — the same mechanism described in
-[multi-task-models.md](multi-task-models.md).
+If you designed against a wrapped model with `target=None`, prune with the same
+wrapper and `target=None`. If you designed with `target=3` on the raw model, prune
+with `target=3`. **A mismatch prunes against the wrong objective and is not
+reported** — it is a silently different question, not an error.
 
-Measured on a 3-output motif oracle with 2 planted edits and `threshold=0.5`:
-
-| `target` | edits kept | oracle output |
-|---|---|---|
-| `1` | 2 / 2 | 5.0 |
-| `None` | 2 / 2 | 5.0 |
-| `-1` | **0 / 2** | 4.0 (design destroyed) |
-
-**`target` must match how you sliced during design.** If you designed against a
-wrapped model with `target=None`, prune with the same wrapper and `target=None`. If
-you designed with `target=3` on the raw model, prune with `target=3`. A mismatch
-prunes against the wrong objective and is not reported.
+Negative and out-of-range values are rejected here for the same reason as in design
+(`ValueError`) → [multi-task-models.md](multi-task-models.md). Older releases
+accepted them, and the consequence here was worse than in design: an empty selection
+made `torch.abs(y_hat - y_mod).sum()` equal `0.0` for every candidate, below any
+threshold, so **every edit was pruned** and the template came back. Measured on a
+3-output oracle with 2 planted edits at `threshold=0.5`, `target=-1` kept 0 of 2
+edits and dropped the output from 5.0 to 4.0.
 
 ## Cost
 

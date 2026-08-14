@@ -53,29 +53,31 @@ The built-in selector is `target`. It slices as `[:, target:target+1]`, so:
   `target=True` selects output 1 and `target=False` selects output 0. Never write
   this on purpose.
 
-### Footgun: a negative or out-of-range `target` silently designs nothing
+### `-1` is not "the last output"
 
-`target=-1` becomes `slice(-1, 0)` and `target=7` on a 3-output model becomes
-`slice(7, 8)`. Both select an **empty** tensor of shape `(batch_size, 0)`. MSE
-against an empty tensor is `nan`, `nan < best_total_loss` is never true, so no
-iteration ever improves, the run early-stops, and `fit_transform` returns the
-**unedited template**. The only signal is a torch broadcasting `UserWarning`,
-which `verbose=False` hides.
+`target` is sliced as `[:, target:target+1]`, so `target=-1` would mean
+`slice(-1, 0)` — an **empty** selection, not the last output. ledidi rejects it:
 
-Measured on a 3-output motif oracle asked for a value of 6:
+```
+ValueError: target must be non-negative, not `-1`. Negative indexing is not
+supported because it selects an empty slice rather than counting from the end
+```
 
-| `target` | selected shape | initial loss | mean edits/seq | final output |
-|---|---|---|---|---|
-| `2` | `(1, 1)` | 4.0 | 2 | 6.00 |
-| `-1` | `(1, 0)` | `nan` | 0 | 4.00 (unchanged) |
-| `7` | `(1, 0)` | `nan` | 0 | 4.00 (unchanged) |
+An out-of-range positive index is caught too, on the first forward pass:
 
-`-1` for "the last output" is a standard PyTorch habit and it does not work here.
-Count your model's outputs and pass a non-negative index, or wrap and use
-`target=None`. **If a design returns zero edits, check `target` first.**
+```
+ValueError: target=7 selects no outputs from a model that returns 3 of them
+```
 
-The same slicing code is in `greedy_pruning`, where an empty selection makes every
-candidate score 0.0 and therefore prunes **every** edit — see [pruning.md](pruning.md).
+`-1` for "the last output" is a standard PyTorch habit, so expect to hit this. Count
+your model's outputs and pass a non-negative index, or wrap and use `target=None`.
+
+Older releases did not validate either case: the empty slice made the output loss
+`nan`, no iteration ever improved on it, and the run returned the **unedited
+template** after early-stopping — silently, with only a torch broadcasting warning.
+If a design from an older version came back with zero edits, this is the first thing
+to check. `greedy_pruning` had the mirror-image failure, reverting every edit
+([pruning.md](pruning.md)).
 
 ## Masking inside the loss (the fallback)
 

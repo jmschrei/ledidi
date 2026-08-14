@@ -759,3 +759,96 @@ def test_ledidi_wrapper_bad_X_shape(model, y_bar):
 def test_ledidi_wrapper_non_tensor_y_bar(model, X):
 	with assert_raises(ValueError):
 		ledidi(model, X, [1.0, 2.0, 3.0], device='cpu', verbose=False)
+
+
+###
+# target validation
+#
+# A negative or out-of-range target used to slice an empty tensor, which made
+# the output loss nan, meant no iteration ever improved on the initial loss,
+# and returned the unedited template after burning early_stopping_iter
+# iterations -- silently, with only a torch broadcasting warning.
+
+
+def test_ledidi_negative_target_raises(model):
+	with assert_raises(ValueError):
+		Ledidi(model, shape=(4, 12), target=-1)
+
+
+def test_ledidi_out_of_range_target_raises(model, X, y_bar):
+	# The model returns 3 outputs, so target=7 slices nothing.
+	designer = Ledidi(model, shape=(4, 12), target=7, max_iter=5, verbose=False)
+	with assert_raises(ValueError):
+		designer.fit_transform(X, torch.tensor([[5.0]]))
+
+
+def test_ledidi_bool_target_raises(model):
+	with assert_raises(TypeError):
+		Ledidi(model, shape=(4, 12), target=True)
+
+
+def test_ledidi_wrapper_negative_target_raises(model, X, y_bar):
+	with assert_raises(ValueError):
+		ledidi(model, X, y_bar, target=-1, device='cpu', verbose=False)
+
+
+###
+# input_mask must not discard priors outside the mask
+#
+# fit_transform restores the template's own character so masked positions stay
+# drawable. That restore used to be unmasked, so it zeroed the template
+# channel at EVERY position and silently discarded any prior placed there --
+# which also broke the documented "force an edit by -inf-ing everything else"
+# idiom whenever a mask was passed.
+
+
+def test_ledidi_input_mask_preserves_priors_outside_mask(model, X, y_bar):
+	initial_weights = torch.full((1, 4, 12), 2.0)
+	input_mask = torch.zeros(12, dtype=torch.bool)
+	input_mask[:4] = True
+
+	designer = Ledidi(model, shape=(4, 12), input_mask=input_mask,
+		initial_weights=initial_weights, max_iter=1, verbose=False)
+	designer.fit_transform(X, y_bar)
+
+	weights = designer.weights.detach()
+	outside = weights[:, :, 4:]
+
+	# Every entry outside the mask keeps its prior, including the one sitting
+	# on the template's own character.
+	assert_array_almost_equal(outside, torch.full((1, 4, 8), 2.0), 4)
+
+
+def test_ledidi_input_mask_still_zeroes_template_inside_mask(model, X, y_bar):
+	initial_weights = torch.full((1, 4, 12), 2.0)
+	input_mask = torch.zeros(12, dtype=torch.bool)
+	input_mask[:4] = True
+
+	designer = Ledidi(model, shape=(4, 12), input_mask=input_mask,
+		initial_weights=initial_weights, max_iter=1, verbose=False)
+	designer.fit_transform(X, y_bar)
+
+	weights = designer.weights.detach()
+	template = X[:, :, :4].type(torch.bool)
+
+	# Inside the mask the template character is drawable and everything else
+	# is forbidden.
+	assert_array_almost_equal(weights[:, :, :4][template], torch.zeros(4), 4)
+	assert bool(torch.isinf(weights[:, :, :4][~template]).all())
+
+
+###
+# n_samples must not retain an autograd graph
+#
+# The post-fit draw was not wrapped in no_grad, so every draw kept its graph
+# and the returned designs carried requires_grad=True, roughly doubling the
+# memory a large n_samples needed.
+
+
+def test_ledidi_n_samples_detached(model, X, y_bar):
+	X_bar = ledidi(model, X, y_bar, n_samples=8, max_iter=5, device='cpu',
+		verbose=False)
+
+	assert not X_bar.requires_grad
+	assert X_bar.grad_fn is None
+	assert X_bar.shape == (8, 4, 12)

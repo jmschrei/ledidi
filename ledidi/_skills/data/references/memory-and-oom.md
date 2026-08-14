@@ -152,12 +152,16 @@ Less of the objective, but honest and fast.
 
 These are surprising because they are not part of the optimization at all.
 
-- **`n_samples` retains an autograd graph.** The post-fit sampling loop is not
-  wrapped in `torch.no_grad()`, so every draw keeps its graph and the returned
-  designs come back with `requires_grad=True`. Measured at `length=2114`:
-  `n_samples=5000` peaks at **648 MiB**, versus **324 MiB** for the same draw under
-  `no_grad` (the designed tensor alone is 161 MiB). To avoid it, keep the fitted
-  designer and draw yourself:
+- **The default return path retains an autograd graph.** `fit_transform` returns a
+  clone of the best iterate, so a design that improved on its template comes back
+  with `requires_grad=True`. `.detach()` designs you intend to hold in bulk. The
+  `n_samples` path is drawn under `torch.no_grad()` and comes back detached —
+  measured at `length=2114`, `n_samples=5000` peaks at **486 MiB** (the designed
+  tensor alone is 161 MiB); before that draw was wrapped it cost 648 MiB and
+  returned a graph.
+- **Large draws are still cheaper via the designer**, because you can move each
+  chunk off the GPU as you go rather than concatenating 5,000 designs in device
+  memory:
 
   ```python
   X = X.cuda()                      # ledidi() moves the MODEL, not your template
@@ -166,8 +170,7 @@ These are surprising because they are not part of the optimization at all.
       draws = torch.cat([designer(X).cpu() for _ in range(n // designer.batch_size + 1)])[:n]
   ```
 
-  The default return path also carries a graph, so `.detach()` designs you intend
-  to keep around in bulk.
+  Each chunk lands on the CPU, so device memory never holds more than one batch.
 - **`return_history=True` accumulates on the design device.** It stores
   `torch.where(X_hat != X_)` index tensors per iteration, on the GPU — confirmed
   `cuda:0` in a CUDA run. Measured on a realistic design (2114 bp, `batch_size=16`,

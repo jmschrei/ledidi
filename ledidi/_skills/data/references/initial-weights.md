@@ -118,11 +118,14 @@ not the initial ones, which is exactly what makes the comparison meaningful.)
 
 ## Interaction with `input_mask`
 
-**Passing `input_mask` at all erases every prior you placed on a template
-character, at every position — not just inside the mask.** It also breaks the
-forced-edit idiom above. Priors on non-template characters outside the mask do
-survive. This is measured and explained in [masks.md](masks.md); the short version
-is: use `input_mask` or `initial_weights` in a given design, not both.
+The two compose: `input_mask` wins inside its span (everything becomes `-inf` except
+the template's own character), and your `initial_weights` apply everywhere else
+untouched. So you can protect a region and prior the rest in one design.
+
+Inside the mask your priors are discarded, so do not try to express a preference
+there — and note that the forced-edit idiom above is a *position*-level constraint of
+its own, so forcing a motif inside a masked span is contradictory. Details and the
+older-release caveat are in [masks.md](masks.md).
 
 ## Related references
 
