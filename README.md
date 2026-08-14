@@ -190,7 +190,7 @@ Most designs only require tuning a couple of knobs. These are passed straight th
 | `l` | `0.1` | Weight on the edit (input) loss. **The main knob to tune** — lower values prioritize hitting the target output, higher values prioritize making fewer edits. |
 | `target` | `None` | For a multi-task model, the index of the output to design against. `None` uses the whole output. |
 | `output_loss` | `MSELoss()` | The loss comparing the model's prediction to `y_bar`. Swap in any callable `f(y_hat, y_bar)`. |
-| `tau` | `1` | Gumbel-softmax temperature; higher is sharper (closer to a hard argmax). |
+| `tau` | `1` | Gumbel-softmax temperature. Affects only the gradient, not the sampled sequence (which is one-hot at every `tau`). Rarely worth tuning. |
 | `batch_size` | `16` | Sequences sampled and averaged per iteration. |
 | `max_iter` | `1000` | Maximum optimization iterations. |
 | `early_stopping_iter` | `100` | Stop after this many iterations without improvement. |

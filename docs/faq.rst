@@ -45,7 +45,8 @@ As of version 2.2.0 Ledidi validates its inputs up front. The most common messag
 - **Shape mismatch** -- ``X`` must be ``(1, n_channels, length)``; ``input_mask`` must be ``(length,)``; ``initial_weights`` must be ``(1, n_channels, length)``; in pruning, ``X_hat`` must match ``X``'s shape.
 - **``y_bar`` leading dimension** -- ``y_bar`` must have shape ``(1, n_outputs)``. A common mistake is passing ``torch.tensor([4.5])`` (shape ``(1,)``) instead of ``torch.tensor([[4.5]])``.
 - **Wrong dtype** -- ``input_mask`` and a :class:`~ledidi.losses.MinGap` mask must be ``torch.bool``.
-- **Non-positive hyperparameter** -- ``tau``, ``lr``, ``batch_size``, ``max_iter``, ``early_stopping_iter``, and ``report_iter`` must be positive; ``l`` must be non-negative; ``threshold`` in pruning must be positive.
+- **Non-positive hyperparameter** -- ``tau``, ``lr``, ``batch_size``, ``max_iter``, ``early_stopping_iter``, and ``report_iter`` must be positive; ``l`` and ``threshold`` in pruning must be non-negative (a ``threshold`` of 0 is valid and reverts no edits).
+- **Negative or out-of-range ``target``** -- ``target`` is an index of a single output, so ``target=-1`` does not mean "the last output" and raises a ``ValueError``; an index past the end of the model's output raises on the first forward pass. Pass a non-negative index, or wrap the model and use ``target=None``.
 - **Degenerate ``MinGap`` mask** -- the on-target/off-target mask must contain at least one ``True`` and at least one ``False``; an all-on or all-off mask has no gap to maximize.
 
 Tensor validation is delegated to ``tangermeme.utils._validate_input``, which raises ``ValueError`` (not ``TypeError``) for tensor problems; ``TypeError`` is reserved for a non-``Module`` model or a non-integer ``target``.

@@ -76,8 +76,7 @@ against this scale — a weight of 2 is a nudge, a weight of 10 is a decision.
 
 ### `tau` (default `1`) changes the gradient, not the sample
 
-`tau` divides the perturbed logits before the softmax. Two things follow, and the
-repo's prose docs get both backwards, so trust this section over them:
+`tau` divides the perturbed logits before the softmax. Two things follow:
 
 1. **The returned sample is hard one-hot at every `tau`.** `forward` returns a
    scatter of `argmax(y_soft)`, and dividing by a positive scalar cannot reorder

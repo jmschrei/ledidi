@@ -314,10 +314,18 @@ class Ledidi(torch.nn.Module):
         and the desired values.
 
     tau: float, positive, optional
-        The sharpness of the sampled values from the Gumbel distribution used
-        to generate the one-hot encodings at each step. Higher values mean
-        sharper, i.e., more closely match the argmax of each position.
-        Default is 1.
+        The temperature of the Gumbel-softmax distribution, which divides the
+        perturbed logits before the softmax. Note that this does not change the
+        sequences that are drawn: `forward` returns a hard one-hot sample at
+        every value of `tau`, and because dividing by a positive scalar cannot
+        reorder an argmax, the drawn sequence is identical across `tau` for a
+        given noise draw. What `tau` changes is the straight-through gradient,
+        whose magnitude goes as `(1/tau)` times the softmax Jacobian. Those two
+        factors oppose each other, so the relationship is not monotonic: small
+        values saturate the softmax and the gradient vanishes, large values
+        flatten it and the `1/tau` factor dominates. Saturation is governed by
+        `gap / tau`, where `gap = -log(eps)` is the logit distance between the
+        template's character and the alternatives. Default is 1.
 
     l: float, non-negative, optional
         The mixing weight parameter between the input loss and the output loss,

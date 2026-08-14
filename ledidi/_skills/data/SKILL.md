@@ -15,8 +15,9 @@ prediction becomes a sequence editor.
 This skill is a **router**. Each topic below has a reference file with exact
 signatures and footguns. **Read the relevant reference file before writing
 code** — do not rely on memory of the API. Several of ledidi's failure modes are
-silent: a plausible-looking argument can return your template completely
-unedited, or make pruning revert every edit, with no exception raised.
+silent: a plausible-looking argument can broadcast against the wrong shape, protect
+the region you meant to edit, or prune against the wrong objective, with no
+exception raised.
 
 `tangermeme` is a hard dependency of ledidi (it supplies the input validation),
 and it owns everything that happens *around* a design — one-hot encoding, FASTA
