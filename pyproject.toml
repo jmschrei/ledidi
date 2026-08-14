@@ -39,6 +39,14 @@ markers = [
 ]
 addopts = "-m 'not gpu'"
 
+[tool.coverage.report]
+exclude_also = [
+    "if __name__ == .__main__.:",
+]
+
+[project.scripts]
+ledidi-install-skills = "ledidi._skills.install:main"
+
 [project.urls]
 Homepage = "https://github.com/jmschrei/ledidi"
 Documentation = "https://ledidi.readthedocs.io/en/latest/"
