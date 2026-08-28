@@ -34,6 +34,8 @@ To install from source for development, Ledidi is packaged with a ``pyproject.to
 
 The test suite runs on CPU with ``python -m pytest tests/``.
 
+See :doc:`requirements` for the full hardware and software requirements, including how GPU memory scales with ``batch_size`` and a snippet that verifies the installation.
+
 
 
 Using Ledidi with a coding agent
@@ -94,6 +96,7 @@ Ledidi finds the cheapest place to introduce the motif and edits only the positi
    :caption: Getting Started
 
    self
+   requirements.rst
    getting_started.rst
    input_output.rst
    parameters.rst

@@ -28,6 +28,10 @@ Highlights
 	- Raised the minimum supported Python to 3.10 and the minimum PyTorch to 2.0.
 	- Expanded the documentation: a runnable :doc:`getting_started` walkthrough, a
 	  :doc:`parameters` reference, and the input/output and FAQ pages above.
+	- Added a :doc:`requirements` page documenting the hardware and software
+	  Ledidi needs -- measured CPU/GPU runtimes and peak GPU memory as a function
+	  of ``batch_size`` and oracle size, the core and optional dependencies, and a
+	  snippet that verifies an installation end to end.
 	- Added :func:`ledidi.plot.plot_loss` for drawing the input and output loss
 	  curves from a returned history, and gave :func:`ledidi.plot.plot_edits` an
 	  ``axs`` argument so its tracks can be drawn into an existing layout.

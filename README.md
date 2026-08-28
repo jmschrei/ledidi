@@ -41,6 +41,14 @@ uv pip install -e ".[dev]"
 
 The test suite runs on CPU with `python -m pytest tests/`.
 
+### Requirements
+
+**Software.** Python >= 3.10 and PyTorch >= 2.0. Installing Ledidi pulls in [tangermeme](https://github.com/jmschrei/tangermeme) (>= 1.3.0), `numpy`, and `matplotlib` automatically; nothing else is required to design sequences. The tutorials additionally use whichever oracle package they demonstrate (`bpnetlite`, `enformer-pytorch`, `boda`), but Tutorials 0 and 8 run with no extra packages and no downloads.
+
+**Hardware.** Ledidi runs on a CPU or a CUDA GPU, and there is no minimum GPU — the toy example below finishes in about three seconds on a single CPU thread. Note that `ledidi` defaults to `device='cuda'`, so on a machine without a GPU you must pass `device='cpu'` explicitly. Memory is dominated by the oracle rather than by Ledidi: a BPNet-scale design over a 2114 bp sequence peaks at 232 MB of GPU memory at the default `batch_size=16` (and takes 0.8s on a GPU versus 9.2s on a CPU), scaling roughly linearly in `batch_size`. Large long-context oracles are the case that actually strains a card.
+
+See the [requirements page](https://ledidi.readthedocs.io/en/latest/requirements.html) for the full hardware and software requirements, measured memory and runtime tables, and a snippet that verifies your installation end to end.
+
 ### Using Ledidi with a coding agent
 
 Ledidi ships a [Claude Code Agent Skill](https://docs.claude.com/en/docs/claude-code/skills) that teaches an agent the design objective, the oracle-model contract, and the footguns that silently produce bad designs. Install it once and it applies in every project:
