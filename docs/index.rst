@@ -24,17 +24,7 @@ Ledidi is on PyPI and can be installed with pip::
 
    pip install ledidi
 
-If you already have PyTorch installed this takes less than a minute; otherwise most of the time is spent installing PyTorch. Installing Ledidi automatically pulls in `tangermeme <https://github.com/jmschrei/tangermeme>`_, which Ledidi uses for input validation and which provides the sequence and model utilities used throughout the tutorials. Ledidi requires **Python >= 3.10** and **PyTorch >= 2.0**.
-
-To install from source for development, Ledidi is packaged with a ``pyproject.toml`` and is built with `uv <https://docs.astral.sh/uv/>`_::
-
-   git clone https://github.com/jmschrei/ledidi
-   cd ledidi
-   uv pip install -e ".[dev]"
-
-The test suite runs on CPU with ``python -m pytest tests/``.
-
-See :doc:`requirements` for the full hardware and software requirements, including how GPU memory scales with ``batch_size`` and a snippet that verifies the installation.
+See :doc:`installation` for the full guide -- virtual environments, the CPU-only PyTorch build and what changes when you use it, installing from source, a snippet that confirms the install works, and troubleshooting. See :doc:`requirements` for the hardware and software Ledidi needs.
 
 
 
@@ -96,6 +86,7 @@ Ledidi finds the cheapest place to introduce the motif and edits only the positi
    :caption: Getting Started
 
    self
+   installation.rst
    requirements.rst
    getting_started.rst
    input_output.rst

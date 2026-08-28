@@ -5,9 +5,9 @@
 Requirements
 ============
 
-Ledidi is a thin optimization loop wrapped around whatever oracle model you hand it, so its own requirements are modest: a recent Python, PyTorch, and three small packages. In practice the hardware you need is set almost entirely by the oracle, not by Ledidi -- if your model can run a forward and backward pass on a batch of sequences, Ledidi can design against it.
+Ledidi is a thin optimization loop wrapped around whatever oracle model you hand it, so its own requirements are modest: a recent Python, PyTorch, and three further packages. In practice the hardware you need is set almost entirely by the oracle, not by Ledidi -- if your model can run a forward and backward pass on a batch of sequences, Ledidi can design against it.
 
-Everything below installs with a single ``pip install ledidi``. Jump to :ref:`verifying-your-installation` for a snippet that confirms the whole stack works end to end.
+Everything below installs with a single ``pip install ledidi``; see :doc:`installation` for the step-by-step guide, including the CPU-only PyTorch build and a snippet that confirms the whole stack works end to end.
 
 
 Hardware
@@ -79,7 +79,7 @@ System memory and disk
 
 Peak resident memory was under 1 GB for both runs above, so system RAM is rarely the binding constraint; a CPU-only design needs about as much RAM as running the oracle on the same batch.
 
-The install itself is small -- the ``ledidi`` wheel is under 100 KB -- but a CUDA-enabled PyTorch is not: ``torch`` plus its bundled NVIDIA libraries take roughly 4.3 GB of disk. The CPU-only PyTorch build is far smaller if space is tight. Budget separately for the oracle checkpoints and any genome files you use; the BPNet models used in the tutorials are about 31 MB in total, while an ``hg38`` FASTA is around 3 GB.
+The install itself is small -- the ``ledidi`` wheel is under 100 KB -- but a CUDA-enabled PyTorch is not: ``torch`` plus its bundled NVIDIA libraries take roughly 4.3 GB of disk. The CPU-only PyTorch build is far smaller if space is tight -- a complete CPU-only environment measures 1.3-1.5 GB against roughly 4.3 GB for the CUDA one; see :doc:`installation`. Budget separately for the oracle checkpoints and any genome files you use; the BPNet models used in the tutorials are about 31 MB in total, while an ``hg38`` FASTA is around 3 GB.
 
 
 Software
@@ -114,6 +114,8 @@ These four are installed automatically by ``pip install ledidi``:
      - any
      - :func:`ledidi.plot.plot_loss` and :func:`ledidi.plot.plot_edits`.
 
+``tangermeme`` brings a scientific stack of its own (``pandas``, ``scipy``, ``scikit-learn``, ``numba``, ``pyfaidx``, ``pybigtools``, ``memelite``, ``tqdm``), so a complete environment is larger than these four suggest -- a clean CPU-only install came to 36 packages. Those extras are what make the genomics I/O and motif utilities used in the tutorials available without further installation.
+
 Optional dependencies
 ---------------------
 
@@ -146,73 +148,14 @@ None of these are needed to design sequences; install them only for the task at 
 
 Tutorials 0 and 8 use a parameter-free toy oracle and need none of the above -- they run anywhere Ledidi itself does.
 
-*Coding agents* -- Ledidi bundles a `Claude Code Agent Skill <https://docs.claude.com/en/docs/claude-code/skills>`_ that is installed with the package and copied into place by the ``ledidi-install-skills`` console script. It requires nothing beyond Ledidi itself. See the :doc:`Installation section <index>` for details.
-
-
-.. _verifying-your-installation:
-
-Verifying your installation
-===========================
-
-This snippet prints the versions of everything Ledidi depends on, reports whether a GPU was found, and then runs a complete design against a parameter-free oracle. It takes a few seconds and downloads nothing, so it exercises the whole stack -- optimizer, sampler, and gradient flow -- without needing a model checkpoint::
-
-   import platform
-   import torch
-   import numpy
-   import matplotlib
-   import tangermeme
-   import ledidi
-
-   print("python     ", platform.python_version())
-   print("torch      ", torch.__version__)
-   print("numpy      ", numpy.__version__)
-   print("matplotlib ", matplotlib.__version__)
-   print("tangermeme ", tangermeme.__version__)
-   print("ledidi     ", ledidi.__version__)
-
-   device = "cuda" if torch.cuda.is_available() else "cpu"
-   print("device     ", device)
-
-   # A parameter-free oracle that scores how well a sequence matches the AP-1
-   # motif TGACTCA, and a random 50 bp sequence to edit.
-   weights = torch.zeros(1, 4, 7)
-   for i, char in enumerate("TGACTCA"):
-       weights[0, "ACGT".index(char), i] = 1.0
-
-   class MotifScore(torch.nn.Module):
-       def forward(self, X):
-           return torch.nn.functional.conv1d(X, weights.to(X.device)).amax(dim=-1)
-
-   torch.manual_seed(0)
-   idxs = torch.randint(0, 4, (1, 50))
-   X = torch.zeros(1, 4, 50).scatter_(1, idxs.unsqueeze(1), 1.0)
-
-   X_hat = ledidi.ledidi(MotifScore(), X, torch.tensor([[7.0]]), device=device,
-       random_state=0, verbose=False)
-
-   designed = "".join("ACGT"[c] for c in X_hat[0].argmax(dim=0).cpu())
-   assert "TGACTCA" in designed, "design failed -- see the FAQ page"
-   print("\nledidi is installed and working.")
-
-The version numbers will differ, but the output should end the same way::
-
-   python      3.13.5
-   torch       2.12.0+cu132
-   numpy       2.4.6
-   matplotlib  3.10.0
-   tangermeme  1.4.1
-   ledidi      2.1.0
-   device      cuda
-
-   ledidi is installed and working.
-
-If ``device`` prints ``cpu`` on a machine you expect to have a GPU, PyTorch was installed without CUDA support; reinstall it following the `PyTorch install matrix <https://pytorch.org/get-started/locally/>`_. If the assertion fails or the script raises, the :doc:`faq` covers the common causes.
+*Coding agents* -- Ledidi bundles a `Claude Code Agent Skill <https://docs.claude.com/en/docs/claude-code/skills>`_ that is installed with the package and copied into place by the ``ledidi-install-skills`` console script. It requires nothing beyond Ledidi itself. See the :doc:`landing page <index>` for what the skill covers, and :doc:`installation` for keeping the installed copy up to date.
 
 
 Where to go next
 ================
 
-- :doc:`getting_started` -- a step-by-step walkthrough of the example above.
+- :doc:`installation` -- step-by-step install recipes, CPU-only included, and how to confirm they worked.
+- :doc:`getting_started` -- a step-by-step walkthrough of your first design.
 - :doc:`input_output` -- the exact tensor shapes and dtypes Ledidi expects.
 - :doc:`parameters` -- the knobs worth tuning, starting with ``l`` and ``batch_size``.
 - :doc:`faq` -- CPU vs GPU, reproducibility, and common error messages.

@@ -30,8 +30,12 @@ Highlights
 	  :doc:`parameters` reference, and the input/output and FAQ pages above.
 	- Added a :doc:`requirements` page documenting the hardware and software
 	  Ledidi needs -- measured CPU/GPU runtimes and peak GPU memory as a function
-	  of ``batch_size`` and oracle size, the core and optional dependencies, and a
-	  snippet that verifies an installation end to end.
+	  of ``batch_size`` and oracle size, and the core and optional dependencies.
+	- Split installation out of the landing page into a full :doc:`installation`
+	  guide covering virtual environments, the CPU-only PyTorch build and the
+	  ``device='cpu'`` argument it requires, conda, installing from source,
+	  upgrading, troubleshooting, and a snippet that verifies an installation end
+	  to end.
 	- Added :func:`ledidi.plot.plot_loss` for drawing the input and output loss
 	  curves from a returned history, and gave :func:`ledidi.plot.plot_edits` an
 	  ``axs`` argument so its tracks can be drawn into an existing layout.

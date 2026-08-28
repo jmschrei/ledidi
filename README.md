@@ -41,6 +41,15 @@ uv pip install -e ".[dev]"
 
 The test suite runs on CPU with `python -m pytest tests/`.
 
+On a machine without a GPU, install the much smaller CPU-only PyTorch build first and then Ledidi:
+
+```
+pip install --index-url https://download.pytorch.org/whl/cpu torch
+pip install ledidi
+```
+
+Note that `ledidi` defaults to `device='cuda'`, so on such a machine you must pass `device='cpu'` explicitly. See the [installation guide](https://ledidi.readthedocs.io/en/latest/installation.html) for the full walkthrough — virtual environments, conda, installing from source, confirming the install works, and troubleshooting.
+
 ### Requirements
 
 **Software.** Python >= 3.10 and PyTorch >= 2.0. Installing Ledidi pulls in [tangermeme](https://github.com/jmschrei/tangermeme) (>= 1.3.0), `numpy`, and `matplotlib` automatically; nothing else is required to design sequences. The tutorials additionally use whichever oracle package they demonstrate (`bpnetlite`, `enformer-pytorch`, `boda`), but Tutorials 0 and 8 run with no extra packages and no downloads.
