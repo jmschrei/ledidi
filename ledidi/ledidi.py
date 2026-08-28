@@ -166,8 +166,10 @@ def ledidi(model, X, y_bar, n_repeats=1, n_samples=None, return_designer=False,
 		each loss and other statistics. Default is False.
 	
 	device: str or torch.device, optional
-		The device to move all the tensors and models to as a convenience. Default
-		is 'cuda'.
+		The device to move all the tensors and models to as a convenience. Note
+		that this is 'cuda' unconditionally, not 'cuda' when a GPU is available,
+		so on a machine without one you must pass 'cpu' explicitly or the call
+		will raise. Default is 'cuda'.
 
 	random_state: int or None, optional
 		A seed for the Gumbel-softmax sampling that makes the design procedure

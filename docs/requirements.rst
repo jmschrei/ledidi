@@ -15,7 +15,7 @@ Hardware
 
 Ledidi runs on CPU and on a CUDA GPU. Neither is a hard requirement, and there is no minimum GPU: the toy examples in the :doc:`Quickstart <index>` and :doc:`getting_started` run on a laptop CPU in seconds. A GPU becomes worthwhile once the oracle is a real genomics model, and it becomes necessary once you want large batches or long sequences.
 
-By default ``ledidi`` moves the model and tensors to the GPU (``device='cuda'``). **On a machine without a CUDA GPU you must pass** ``device='cpu'`` **explicitly**, otherwise the call errors out with a CUDA-related ``RuntimeError``.
+By default ``ledidi`` moves the model and tensors to the GPU (``device='cuda'``). **On a machine without a CUDA GPU you must pass** ``device='cpu'`` **explicitly**, otherwise the call fails immediately -- with ``AssertionError: Torch not compiled with CUDA enabled`` on a CPU-only PyTorch build, or ``RuntimeError: No CUDA GPUs are available`` on a CUDA build that cannot find a device. See :doc:`installation` for both cases.
 
 Processor
 ---------
@@ -35,11 +35,11 @@ The numbers below were measured on a Linux workstation with PyTorch 2.12 (CUDA 1
      - --
      - --
    * - BPNet GATA2 (0.11 M params), 2114 bp, ``batch_size=16``
-     - 9.2 s (8 threads)
+     - 30 s (1 thread), 8 s (8 threads)
      - 0.8 s
      - 232 MB
 
-Both are complete default runs (``max_iter=1000``), which stop early after 180 iterations for the BPNet example. The takeaway is that a small oracle is perfectly comfortable on a CPU -- the tutorials that use one are written to run there -- while a GPU buys roughly an order of magnitude, and much more for larger models and batches.
+Both are complete default runs (``max_iter=1000``), which stop early after 180 iterations for the BPNet example. CPU timings depend strongly on how many threads PyTorch is allowed: the BPNet run takes about 30 s single-threaded, 11 s on four threads, and 8 s on eight. The takeaway is that a small oracle is perfectly comfortable on a CPU -- the tutorials that use one are written to run there -- while a GPU buys roughly an order of magnitude, and much more for larger models and batches.
 
 GPU memory
 ----------

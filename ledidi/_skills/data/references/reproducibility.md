@@ -2,8 +2,11 @@
 
 ## `device` defaults to `'cuda'`
 
-Not "CUDA if available". On a machine without a CUDA GPU every call raises a
-CUDA-related `RuntimeError` until you pass `device='cpu'` explicitly:
+Not "CUDA if available". On a machine without a CUDA GPU every call raises until
+you pass `device='cpu'` explicitly. Which error you get depends on the torch build:
+`AssertionError: Torch not compiled with CUDA enabled` on a CPU-only wheel, and
+`RuntimeError: No CUDA GPUs are available` on a CUDA wheel that finds no device.
+Both mean the same thing:
 
 ```python
 X_bar = ledidi(model, X, y_bar, device='cpu')

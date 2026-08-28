@@ -8,7 +8,7 @@ FAQ and Troubleshooting
 Do I need a GPU?
 ================
 
-No. Ledidi runs on a CPU, and there is no minimum GPU. The toy oracle in the :doc:`Quickstart <index>` designs in about three seconds on a single CPU thread, and a BPNet-scale design over a 2114 bp sequence takes about nine seconds on a CPU against 0.8 seconds on a GPU. Tutorials 0 and 8 are written to run on a CPU with no downloads.
+No. Ledidi runs on a CPU, and there is no minimum GPU. The toy oracle in the :doc:`Quickstart <index>` designs in about three seconds on a single CPU thread, and a BPNet-scale design over a 2114 bp sequence takes about eight seconds on eight CPU threads -- around thirty single-threaded -- against 0.8 seconds on a GPU. Tutorials 0 and 8 are written to run on a CPU with no downloads.
 
 A GPU is worth having once the oracle is a real genomics model and you are designing many sequences, but it is a speed-up rather than a requirement. See :doc:`requirements` for the measured timings and memory, and :doc:`installation` for how to install the smaller CPU-only PyTorch build.
 
