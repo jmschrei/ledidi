@@ -5,14 +5,66 @@
 FAQ and Troubleshooting
 ==========================
 
+Do I need a GPU?
+================
+
+No. Ledidi runs on a CPU, and there is no minimum GPU. The toy oracle in the :doc:`Quickstart <index>` designs in about three seconds on a single CPU thread, and a BPNet-scale design over a 2114 bp sequence takes about nine seconds on a CPU against 0.8 seconds on a GPU. Tutorials 0 and 8 are written to run on a CPU with no downloads.
+
+A GPU is worth having once the oracle is a real genomics model and you are designing many sequences, but it is a speed-up rather than a requirement. See :doc:`requirements` for the measured timings and memory, and :doc:`installation` for how to install the smaller CPU-only PyTorch build.
+
+
 Running on CPU or GPU
 =====================
 
-By default ``ledidi`` moves the model and tensors to the GPU (``device='cuda'``). On a machine without a CUDA GPU you must pass ``device='cpu'`` explicitly, otherwise the call will error with a CUDA-related ``RuntimeError``::
+By default ``ledidi`` moves the model and tensors to the GPU (``device='cuda'``). On a machine without a CUDA GPU you must pass ``device='cpu'`` explicitly::
 
    X_hat = ledidi(model, X, y_bar, device='cpu')
 
+Forget it and the call fails immediately, with one of two messages depending on which PyTorch build you have:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Your PyTorch build
+     - Error you get
+   * - CPU-only (version ends in ``+cpu``)
+     - ``AssertionError: Torch not compiled with CUDA enabled``
+   * - CUDA, but no GPU visible
+     - ``RuntimeError: No CUDA GPUs are available``
+
+Both mean the same thing: pass ``device='cpu'``. To write code that runs on either kind of machine, pick the device up front::
+
+   device = 'cuda' if torch.cuda.is_available() else 'cpu'
+   X_hat = ledidi(model, X, y_bar, device=device)
+
 You can also pass any ``torch.device`` or device string, e.g. ``device='cuda:1'``.
+
+
+I ran out of GPU memory
+=======================
+
+Peak memory is dominated by the oracle, not by Ledidi: each iteration runs a forward *and* backward pass over ``batch_size`` sequences and retains the activations of all of them. It is therefore roughly linear in ``batch_size`` x design length x oracle size x number of oracles. The learned weight matrix itself is a few tens of kilobytes and is never the problem.
+
+Measure before changing anything::
+
+   torch.cuda.reset_peak_memory_stats()
+   X_hat = ledidi(model, X, y_bar, device='cuda')
+   print(torch.cuda.max_memory_allocated() / 2**20, "MiB peak")
+
+Then work down this list and stop at the first rung that works:
+
+1. **Lower** ``batch_size``. A linear reduction that requires no code changes and does not bias the design, since both losses are per-sequence means. Try 8, then 4. This is the right answer far more often than anything below it.
+2. **Shorten the design field.** The other linear axis -- design the region that matters rather than a large window around it.
+3. **Gradient checkpointing on the oracle**, applied in segments rather than to the whole model at once. Wrapping the entire model in a single ``checkpoint(...)`` call saves essentially nothing.
+
+For context on what is normal, a default ``batch_size=16`` design against a BPNet-scale oracle peaks at a few hundred megabytes; see the table in :doc:`requirements`. The bundled agent skill's ``references/memory-and-oom.md`` has the full ladder with measured numbers.
+
+
+Something went wrong installing Ledidi
+======================================
+
+The :doc:`installation` page has a troubleshooting section covering the common cases: ``torch.cuda.is_available()`` returning ``False`` on a machine with a GPU, an install that pulled gigabytes of unwanted ``nvidia-*`` packages, a Python older than the required 3.10, and missing ``pip`` inside a ``uv`` environment. It also has a snippet that verifies an installation end to end, with the expected output for both a CUDA and a CPU-only machine.
 
 
 How reproducible is a design?
