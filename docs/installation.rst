@@ -223,19 +223,19 @@ The version numbers will differ from yours, but the last line is what matters. O
    numpy       2.4.6
    matplotlib  3.10.0
    tangermeme  1.4.1
-   ledidi      2.1.0
+   ledidi      2.2.0
    device      cuda
 
    ledidi is installed and working.
 
-and from a clean CPU-only environment built with the commands above, where the whole script takes about five seconds::
+and from a clean CPU-only environment built with the commands above, where the whole script takes a few seconds::
 
    python      3.10.20
    torch       2.13.0+cpu
    numpy       2.2.6
    matplotlib  3.10.9
    tangermeme  1.4.1
-   ledidi      2.1.0
+   ledidi      2.2.0
    device      cpu
 
    ledidi is installed and working.
