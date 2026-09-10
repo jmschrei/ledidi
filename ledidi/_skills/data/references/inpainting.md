@@ -53,7 +53,7 @@ if n_cols:
 	print("warning: {} unknown columns will be filled freely".format(n_cols))
 ```
 
-If you want them left alone, mask them ([masks.md](masks.md)): a masked all-zero
+If you want them left alone, mask them (`references/masks.md`): a masked all-zero
 column comes back all-zero, still `N`, with no `nan` anywhere in the design — so
 masking genuinely preserves `N` runs. Cropping the region away is the other clean
 option.
@@ -87,8 +87,8 @@ meaningless for the same reason — they are counting different position sets.
 
 ## Related references
 
-[masks.md](masks.md) and [initial-weights.md](initial-weights.md) for the opposite
-operation (constraining rather than freeing), [io-and-validation.md](io-and-validation.md)
-for why all-zero columns validate, [objective.md](objective.md) for what the input
-loss counts, [validating-designs.md](validating-designs.md) — in-painted spans deserve
+`references/masks.md` and `references/initial-weights.md` for the opposite
+operation (constraining rather than freeing), `references/io-and-validation.md`
+for why all-zero columns validate, `references/objective.md` for what the input
+loss counts, `references/validating-designs.md` — in-painted spans deserve
 extra scrutiny precisely because nothing penalized what went into them.

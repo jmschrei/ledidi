@@ -27,9 +27,9 @@ plot_edits(X_attr, [X_bar_attr, X_bar_p_attr],
 ```
 
 `.detach()` the designs first — they carry an autograd graph
-([io-and-validation.md](io-and-validation.md)). `plot_edits` prepends the original as
+(`references/io-and-validation.md`). `plot_edits` prepends the original as
 track 0, so `colors` needs one more entry than you have designs
-([plotting.md](plotting.md)).
+(`references/plotting.md`).
 
 What to look for:
 
@@ -40,7 +40,7 @@ What to look for:
 - High-attribution edits should be the ones pruning **kept**; low-attribution ones the
   ones it discarded. The correspondence is not perfect but the trend should be clear,
   and its absence suggests the pruning threshold or the `target` was wrong
-  ([pruning.md](pruning.md)).
+  (`references/pruning.md`).
 - Beware designs that build a *weak* version of the site rather than a strong one, or
   several weak sites. That is often correct — ledidi is matching a precise target and
   synergistic sites can reach it more cheaply than one strong site — but it should be
@@ -86,8 +86,8 @@ Expect a decrease in some unrelated motifs — a design that is not asked to pre
 other activity will convert other sites into the one you asked for. That is worth
 noticing and reporting, not hiding: it may be unacceptable for your application, in
 which case hold those outputs at baseline
-([multi-task-models.md](multi-task-models.md)) or protect them
-([masks.md](masks.md)) and design again.
+(`references/multi-task-models.md`) or protect them
+(`references/masks.md`) and design again.
 
 ## 3. Independent models: does the effect generalize?
 
@@ -109,7 +109,7 @@ y_enf = predict(enformer_gata2, torch.cat([X, X_bar[:1].detach(), X_bar_p[:1]]))
   a reason to report both.
 - For a design balanced across several oracles, the independent model must be outside
   that set; re-scoring with the same ensemble proves nothing, since an ensemble can be
-  exploited jointly ([multiple-models.md](multiple-models.md)).
+  exploited jointly (`references/multiple-models.md`).
 
 Pass `device=` per call so only one model occupies the GPU at a time — tangermeme's
 `references/comparing-models.md` covers this pattern.
@@ -118,13 +118,13 @@ Pass `device=` per call so only one model occupies the GPU at a time — tangerm
 
 - **Regions no oracle could see.** If you cropped or tiled a model, re-apply it at the
   flanks and confirm nothing odd was built where nothing was watching
-  → [receptive-field.md](receptive-field.md).
+  → `references/receptive-field.md`.
 - **In-painted spans.** Blanked regions carry no edit penalty, so the design had free
-  rein there. Scrutinize them first → [inpainting.md](inpainting.md).
+  rein there. Scrutinize them first → `references/inpainting.md`.
 - **Affinity catalogs validate themselves, partly.** Predicting across catalog steps
   should trace the requested curve, and motifs that persist across steps are more
   trustworthy than ones appearing at a single target
-  → [catalogs-and-repeats.md](catalogs-and-repeats.md). Note this uses the design
+  → `references/catalogs-and-repeats.md`. Note this uses the design
   oracle, so it is a consistency check, not independent evidence.
 - **Repeats agreeing is weak evidence.** Independent runs converging on the same motif
   is reassuring about the *optimization*; it says nothing about the biology, since every
@@ -139,7 +139,7 @@ model has not been validated, and should be described that way.
 
 ## Related references
 
-[pipeline.md](pipeline.md) for where validation sits in the workflow,
-[plotting.md](plotting.md) for `plot_edits`, [pruning.md](pruning.md) for the
-attribution/pruning correspondence, [memory-and-oom.md](memory-and-oom.md) if
+`references/pipeline.md` for where validation sits in the workflow,
+`references/plotting.md` for `plot_edits`, `references/pruning.md` for the
+attribution/pruning correspondence, `references/memory-and-oom.md` if
 attributing many designs runs out of memory.

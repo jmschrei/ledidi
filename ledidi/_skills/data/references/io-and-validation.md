@@ -17,7 +17,7 @@ oracle was trained on.
 - Each position must sum to 1 with a single `1.0`, **or** be all zeros.
 - **All-zero columns are legal** and mean unknown / `N`. They are also free to edit
   and cost nothing in the input loss, which is the entire mechanism behind
-  in-painting → [inpainting.md](inpainting.md). Any `N` in a real template is
+  in-painting → `references/inpainting.md`. Any `N` in a real template is
   therefore a candidate for editing and will *not* be preserved.
 
 ### Footgun: `one_hot_encode` returns `int8`
@@ -52,16 +52,16 @@ the batch.
 
 - Single-output model: `torch.tensor([[4.5]])`.
 - Multi-task model or `DesignWrapper`: one entry per output, in the order the model
-  returns them → [multi-task-models.md](multi-task-models.md),
-  [multiple-models.md](multiple-models.md).
+  returns them → `references/multi-task-models.md`,
+  `references/multiple-models.md`.
 - **`n_outputs` must match the output width *after* `target` slicing**, not the
   model's full width. With `target=2` on a 3-output model the loss receives
   `(batch_size, 1)`, so `y_bar` is `(1, 1)`.
 - A **list** of such tensors means an affinity catalog, not a batch →
-  [catalogs-and-repeats.md](catalogs-and-repeats.md).
+  `references/catalogs-and-repeats.md`.
 - Some losses ignore `y_bar` but still require it — `MinGap` needs a correctly
   shaped placeholder such as `torch.zeros(1, n_outputs)` →
-  [custom-losses.md](custom-losses.md).
+  `references/custom-losses.md`.
 
 ### Footgun: a missing bracket does not raise, it broadcasts
 
@@ -84,19 +84,19 @@ Write the inner brackets and check `y_bar.shape` before a long run.
 `X_bar`, shape `(batch_size, n_channels, length)`, `float32`, one-hot — a batch of
 independently sampled designs from one learned weight matrix, so they are
 correlated by construction. Extra leading dimensions appear for catalogs and
-repeats → [catalogs-and-repeats.md](catalogs-and-repeats.md).
+repeats → `references/catalogs-and-repeats.md`.
 
 **It carries an autograd graph.** Both the default return and the `n_samples` draw
 come back with `requires_grad=True`. Call `.detach()` before storing many of them,
-and see [memory-and-oom.md](memory-and-oom.md) for the memory this costs.
+and see `references/memory-and-oom.md` for the memory this costs.
 
 ## Masks and priors
 
 - `input_mask` — `torch.bool`, shape `(length,)`. `True` marks positions that may
-  **not** be edited → [masks.md](masks.md).
+  **not** be edited → `references/masks.md`.
 - `initial_weights` — `float`, shape `(1, n_channels, length)`. Seeds the
   optimization; `-inf` forbids a character, finite values are soft priors →
-  [initial-weights.md](initial-weights.md).
+  `references/initial-weights.md`.
 
 ## Error reference
 
@@ -128,18 +128,18 @@ These raise nothing and return plausible-looking results:
 
 - a `y_bar` of shape `(1,)` → broadcasts silently (above)
 - an inverted `input_mask` → protects the region you meant to edit
-  ([masks.md](masks.md))
+  (`references/masks.md`)
 - a `target` that does not match how you sliced at design time, in
-  `greedy_pruning` → prunes against the wrong objective ([pruning.md](pruning.md))
+  `greedy_pruning` → prunes against the wrong objective (`references/pruning.md`)
 - `initial_weights` mutated in place, so a reused tensor carries the last run's
-  learned values ([initial-weights.md](initial-weights.md))
+  learned values (`references/initial-weights.md`)
 - a refit `Ledidi` object resuming from its previous best weights
-  ([designer-object.md](designer-object.md))
+  (`references/designer-object.md`)
 - a design whose oracle is invariant to its input → a plausible loss and no edits
-  ([oracle-contract.md](oracle-contract.md))
+  (`references/oracle-contract.md`)
 
 ## Related references
 
-[objective.md](objective.md), [first-design.md](first-design.md) for a worked
-minimal example, [reproducibility.md](reproducibility.md) for `random_state` and
+`references/objective.md`, `references/first-design.md` for a worked
+minimal example, `references/reproducibility.md` for `random_state` and
 `device`.

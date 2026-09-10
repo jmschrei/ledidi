@@ -77,7 +77,7 @@ Older releases did not validate either case: the empty slice made the output los
 template** after early-stopping — silently, with only a torch broadcasting warning.
 If a design from an older version came back with zero edits, this is the first thing
 to check. `greedy_pruning` had the mirror-image failure, reverting every edit
-([pruning.md](pruning.md)).
+(`references/pruning.md`).
 
 ## Masking inside the loss (the fallback)
 
@@ -118,8 +118,8 @@ single template already satisfies.
 
 ## Related references
 
-[oracle-contract.md](oracle-contract.md) for the wrapper basics,
-[multiple-models.md](multiple-models.md) when the tasks live in different models,
-[custom-losses.md](custom-losses.md) for `MinGap` (which requires `target=None`)
-and other objectives, [io-and-validation.md](io-and-validation.md) for `y_bar`
-shape rules, [pruning.md](pruning.md) for keeping `target` consistent afterward.
+`references/oracle-contract.md` for the wrapper basics,
+`references/multiple-models.md` when the tasks live in different models,
+`references/custom-losses.md` for `MinGap` (which requires `target=None`)
+and other objectives, `references/io-and-validation.md` for `y_bar`
+shape rules, `references/pruning.md` for keeping `target` consistent afterward.

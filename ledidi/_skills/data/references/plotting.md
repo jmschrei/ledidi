@@ -30,7 +30,7 @@ ax, ax_input = plot_loss(history)
 Read it as: output loss should drop fast while input loss climbs, then input loss
 should fall as unnecessary edits are shed. An input loss that never falls means `l` is
 too small to matter; an output loss that never drops means the objective is not
-reachable → [objective.md](objective.md).
+reachable → `references/objective.md`.
 
 ## plot_history — where and when edits were proposed
 
@@ -92,6 +92,6 @@ placing it next to the others.
 
 ## Related references
 
-[designer-object.md](designer-object.md) for what is in the history dict,
-[validating-designs.md](validating-designs.md) for computing the attributions
-`plot_edits` needs, [objective.md](objective.md) for interpreting the loss curves.
+`references/designer-object.md` for what is in the history dict,
+`references/validating-designs.md` for computing the attributions
+`plot_edits` needs, `references/objective.md` for interpreting the loss curves.

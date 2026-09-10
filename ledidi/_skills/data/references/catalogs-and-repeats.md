@@ -19,7 +19,7 @@ print(X_bar.shape)          # (4, batch_size, n_channels, length)
   extra dimension is ambiguous with a multi-output `y_bar`, so ledidi insists on the
   explicit form.
 - Each element must independently satisfy the `y_bar` rules — leading dimension 1,
-  width matching the sliced output ([io-and-validation.md](io-and-validation.md)).
+  width matching the sliced output (`references/io-and-validation.md`).
 - Catalogs compose with everything else: masks, in-painting, multi-output targets. For
   a multi-output catalog, each list element is a full `(1, n_outputs)` tensor.
 
@@ -46,7 +46,7 @@ print(X_bar.shape)          # (3, batch_size, n_channels, length)
 
 This is the fix for "all my designs look the same" — the `batch_size` sequences of a
 single run are drawn from one weight matrix and are correlated by construction
-([designer-object.md](designer-object.md)). `n_repeats` gives independent solutions;
+(`references/designer-object.md`). `n_repeats` gives independent solutions;
 `n_samples` does not.
 
 ## Return shapes
@@ -71,17 +71,17 @@ With `n_samples`, `batch_size` above is replaced by `n_samples`.
 
 Each designer gets its own seed offset, so catalog steps and repeats are independent
 of one another while the whole call stays reproducible
-→ [reproducibility.md](reproducibility.md).
+→ `references/reproducibility.md`.
 
 ## Cost
 
 A catalog of `K` targets with `R` repeats is `K * R` full design runs — the time
 multiplies, there is no sharing between them, and this is almost always the cost that
 matters. All results are also stacked **on-device** before returning, which is
-modest by comparison → [memory-and-oom.md](memory-and-oom.md).
+modest by comparison → `references/memory-and-oom.md`.
 
 ## Related references
 
-[designer-object.md](designer-object.md) for `n_samples` and why batch members
-correlate, [io-and-validation.md](io-and-validation.md) for per-element `y_bar` rules,
-[validating-designs.md](validating-designs.md) for reading a catalog with attributions.
+`references/designer-object.md` for `n_samples` and why batch members
+correlate, `references/io-and-validation.md` for per-element `y_bar` rules,
+`references/validating-designs.md` for reading a catalog with attributions.

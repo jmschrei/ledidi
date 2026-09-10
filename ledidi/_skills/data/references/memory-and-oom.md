@@ -34,7 +34,7 @@ Try 8, then 4. This is the right answer far more often than anything below it.
 
 The other linear axis. Design the 2 kbp that matters rather than the 20 kbp around
 it, or reduce the number of chunks / overlap in a tiled wrapper
-([receptive-field.md](receptive-field.md)).
+(`references/receptive-field.md`).
 
 ### 3. Gradient checkpointing on the oracle
 
@@ -106,7 +106,7 @@ micro-batches is correct for a *mean*-reduced loss but wrong for a `sum`-reduced
 (measured 75% off), and unequal micro-batch sizes need proportional weighting.
 
 This requires writing your own loop, because `Ledidi.fit_transform` owns the
-optimizer step. See [designer-object.md](designer-object.md) for the object you
+optimizer step. See `references/designer-object.md` for the object you
 subclass, and expect to reimplement the best-iterate tracking, early stopping, and
 history yourself.
 
@@ -180,7 +180,7 @@ These are surprising because they are not part of the optimization at all.
 - **Catalogs and repeats stack on-device before returning.** An affinity catalog of
   20 targets × 16 sequences × 4 × 2114 float32 is 10.3 MiB resident (measured peak
   21.3 MiB during the stack), and `n_repeats` multiplies it again
-  → [catalogs-and-repeats.md](catalogs-and-repeats.md). Rarely the problem on its
+  → `references/catalogs-and-repeats.md`. Rarely the problem on its
   own; it matters when it lands on top of an already-tight design.
 - **Fragmentation across runs.** Many sequential designs in one process can fail
   with plenty of free memory. `torch.cuda.empty_cache()` between catalog or repeat
@@ -190,7 +190,7 @@ These are surprising because they are not part of the optimization at all.
 ## Reproducibility interaction
 
 Micro-batching changes the number and shape of Gumbel draws, so a split run is not
-bitwise identical to the unsplit one → [reproducibility.md](reproducibility.md).
+bitwise identical to the unsplit one → `references/reproducibility.md`.
 
 ## Validation-time OOM is a different problem
 
@@ -203,7 +203,7 @@ the GPU at a time). Do not re-derive those here.
 
 ## Related references
 
-[objective.md](objective.md) for what `batch_size` means to the gradient,
-[multiple-models.md](multiple-models.md) and
-[receptive-field.md](receptive-field.md) for the two ways oracle cost multiplies,
-[designer-object.md](designer-object.md) for writing a custom loop.
+`references/objective.md` for what `batch_size` means to the gradient,
+`references/multiple-models.md` and
+`references/receptive-field.md` for the two ways oracle cost multiplies,
+`references/designer-object.md` for writing a custom loop.

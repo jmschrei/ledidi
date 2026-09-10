@@ -36,7 +36,7 @@ class Tiled(torch.nn.Module):
   spot at proportional extra cost. Prefer this when the design target could land
   anywhere, or when you saw suspicious activity at a seam.
 - Cost scales with the number of chunks — `n_chunks` forward *and* backward passes
-  per iteration, and activation memory to match → [memory-and-oom.md](memory-and-oom.md).
+  per iteration, and activation memory to match → `references/memory-and-oom.md`.
 
 ### Ask the user how to aggregate the chunks
 
@@ -48,7 +48,7 @@ write `y_bar`:**
 - **One output per chunk** — `y_bar` has an entry per chunk. This gives positional
   control: drive signal into chunk 7 while holding chunks 1–6 at their baseline
   predictions (see the hold-at-baseline idiom in
-  [multi-task-models.md](multi-task-models.md)), and afterward you can say *where*
+  `references/multi-task-models.md`), and afterward you can say *where*
   the signal landed. More bookkeeping.
 - **Aggregated to a scalar** — `.sum(dim=-1, keepdim=True)` or `.mean(...)` inside
   the wrapper, so `y_bar` stays a single value and there is nothing to track. The
@@ -89,7 +89,7 @@ Consequences worth stating explicitly, because they are easy to forget once it r
 - Edits are still **proposed** everywhere in the field. Nothing stops ledidi from
   editing the flanks a cropped model cannot see — those edits are simply not scored
   by it. Restricting *where* edits may happen is a separate mechanism
-  ([masks.md](masks.md)); centering a model does not constrain the design.
+  (`references/masks.md`); centering a model does not constrain the design.
 - So the flanks are optimized against fewer constraints than the center, and are
   where oracle exploitation is most likely to hide.
 
@@ -109,12 +109,12 @@ A flank value that is wildly different from the center — a spurious peak, or a
 prediction far outside the range the model gives natural sequence — means the design
 put something there that no term of your objective was watching. This is a
 validation step, not a design step; fold it into the checks in
-[validating-designs.md](validating-designs.md).
+`references/validating-designs.md`.
 
 ## Related references
 
-[oracle-contract.md](oracle-contract.md) for the wrapper contract,
-[multiple-models.md](multiple-models.md) for combining the wrapped models,
-[masks.md](masks.md) to actually forbid edits in regions no model scores,
-[memory-and-oom.md](memory-and-oom.md) because tiling multiplies memory by the
+`references/oracle-contract.md` for the wrapper contract,
+`references/multiple-models.md` for combining the wrapped models,
+`references/masks.md` to actually forbid edits in regions no model scores,
+`references/memory-and-oom.md` because tiling multiplies memory by the
 number of chunks.

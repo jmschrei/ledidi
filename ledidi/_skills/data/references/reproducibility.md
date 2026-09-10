@@ -15,7 +15,7 @@ X_bar = ledidi(model, X, y_bar, device='cpu')
 Any device string or `torch.device` works, including `'cuda:1'`. The `ledidi()`
 wrapper moves the model, template, and target for you; if you build `Ledidi` yourself
 you own placement — `.to(device)` the designer and both tensors
-([designer-object.md](designer-object.md)).
+(`references/designer-object.md`).
 
 ## `random_state` does not touch the global RNG
 
@@ -44,7 +44,7 @@ RNG.
   so `.to('cuda')` after construction is safe.
 - With a catalog or `n_repeats`, each designer is seeded with `random_state + i * n_repeats + j`
   so the entries stay independent while the whole call is reproducible
-  → [catalogs-and-repeats.md](catalogs-and-repeats.md).
+  → `references/catalogs-and-repeats.md`.
 
 ## What `random_state` does *not* buy you
 
@@ -76,20 +76,20 @@ edit count is in a sane range, and a repeated run on the same machine matches.
 **Micro-batching changes the draws.** Splitting a batch for memory reasons changes how
 many Gumbel samples are taken and in what shape, so an accumulated run is reproducible
 but not bitwise equal to the unsplit one. Do not compare a memory-tuned run against a
-stored gold design → [memory-and-oom.md](memory-and-oom.md).
+stored gold design → `references/memory-and-oom.md`.
 
 ## Reproducing a design later
 
 Record everything that feeds the result: `random_state`, `l`, `target`, `batch_size`,
 `max_iter`, `early_stopping_iter`, the exact `y_bar`, the template, any `input_mask` or
 `initial_weights` (remembering that `initial_weights` is **modified in place** by the
-run, so save a copy before, not after → [initial-weights.md](initial-weights.md)), and
+run, so save a copy before, not after → `references/initial-weights.md`), and
 the oracle checkpoint plus its wrapper. The wrapper is part of the recipe: the same
 model wrapped two ways is two different oracles.
 
 ## Related references
 
-[first-design.md](first-design.md) for the minimal seeded example,
-[catalogs-and-repeats.md](catalogs-and-repeats.md) for seed offsetting,
-[memory-and-oom.md](memory-and-oom.md) for the accumulation caveat,
-[designer-object.md](designer-object.md) for manual device placement.
+`references/first-design.md` for the minimal seeded example,
+`references/catalogs-and-repeats.md` for seed offsetting,
+`references/memory-and-oom.md` for the accumulation caveat,
+`references/designer-object.md` for manual device placement.

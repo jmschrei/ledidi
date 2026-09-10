@@ -1,7 +1,7 @@
 # Per-character constraints and priors
 
 `initial_weights` is the general mechanism behind every constraint in ledidi.
-`input_mask` ([masks.md](masks.md)) is a thin convenience layer over it. Reach for
+`input_mask` (`references/masks.md`) is a thin convenience layer over it. Reach for
 `initial_weights` directly when you need control over *which characters* may appear,
 not just which positions may change.
 
@@ -113,7 +113,7 @@ print(designer.weights[0, 1, 1000:1010])   # did the prior hold, or get optimize
 ```
 
 (`designer` here is the fitted `Ledidi` object from `return_designer=True` →
-[designer-object.md](designer-object.md). Note these are the **best-iterate** weights,
+`references/designer-object.md`. Note these are the **best-iterate** weights,
 not the initial ones, which is exactly what makes the comparison meaningful.)
 
 ## Interaction with `input_mask`
@@ -125,11 +125,11 @@ untouched. So you can protect a region and prior the rest in one design.
 Inside the mask your priors are discarded, so do not try to express a preference
 there — and note that the forced-edit idiom above is a *position*-level constraint of
 its own, so forcing a motif inside a masked span is contradictory. Details and the
-older-release caveat are in [masks.md](masks.md).
+older-release caveat are in `references/masks.md`.
 
 ## Related references
 
-[masks.md](masks.md) for whole-position constraints, [inpainting.md](inpainting.md)
-for freeing a span instead of constraining it, [io-and-validation.md](io-and-validation.md)
-for the shape requirement, [objective.md](objective.md) for how `eps` sets the scale
+`references/masks.md` for whole-position constraints, `references/inpainting.md`
+for freeing a span instead of constraining it, `references/io-and-validation.md`
+for the shape requirement, `references/objective.md` for how `eps` sets the scale
 these logits compete against.

@@ -53,16 +53,16 @@ The contract is easy to state and easy to violate. Three common situations each
 have a dedicated file:
 
 - **One multi-task model, you want a subset of its outputs** →
-  [multi-task-models.md](multi-task-models.md). `target` selects exactly one
+  `references/multi-task-models.md`. `target` selects exactly one
   output; anything else is a wrapper.
 - **Several separate models balanced in one design** →
-  [multiple-models.md](multiple-models.md). `DesignWrapper` or hand-rolled.
+  `references/multiple-models.md`. `DesignWrapper` or hand-rolled.
 - **The model's input window does not match the sequence you want to design** →
-  [receptive-field.md](receptive-field.md). Tiling, centering, and what the model
+  `references/receptive-field.md`. Tiling, centering, and what the model
   cannot see.
 
 Oracle size and count are also what drive GPU memory; if you hit a CUDA OOM, go
-to [memory-and-oom.md](memory-and-oom.md) rather than guessing at `batch_size`.
+to `references/memory-and-oom.md` rather than guessing at `batch_size`.
 
 ## Sanity checks before designing
 
@@ -99,7 +99,7 @@ sequence.
 
 ## Related references
 
-[objective.md](objective.md) for what the sliced output feeds into,
-[custom-losses.md](custom-losses.md) for objectives that a wrapper cannot express,
-[validating-designs.md](validating-designs.md) for confirming the oracle was not
+`references/objective.md` for what the sliced output feeds into,
+`references/custom-losses.md` for objectives that a wrapper cannot express,
+`references/validating-designs.md` for confirming the oracle was not
 merely exploited.
