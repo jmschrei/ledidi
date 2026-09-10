@@ -1,4 +1,4 @@
-# test_install_skills.py
+# test_install.py
 # Contact: Jacob Schreiber <jmschreiber91@gmail.com>
 
 import pytest
