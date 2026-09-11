@@ -48,7 +48,7 @@ class Balanced(torch.nn.Module):
 ```
 
 Trimming or tiling inputs per model is common enough to have its own file →
-[receptive-field.md](receptive-field.md).
+`references/receptive-field.md`.
 
 ## Comparable dynamic ranges
 
@@ -68,18 +68,18 @@ Every added oracle costs a forward *and* backward pass per iteration, so
 wall-clock per iteration grows roughly linearly with the number of models — and
 with their size, not their count: one 512-filter ChromBPNet typically dominates
 four 64-filter BPNets. GPU memory grows the same way, which is the usual reason a
-multi-model design fails outright → [memory-and-oom.md](memory-and-oom.md).
+multi-model design fails outright → `references/memory-and-oom.md`.
 
 ## Validating multi-model designs
 
 A design balanced across several oracles should be checked against a model that
 was *not* in the wrapped oracle, not merely re-scored with the same ensemble — an
-ensemble can be exploited jointly. See [validating-designs.md](validating-designs.md).
+ensemble can be exploited jointly. See `references/validating-designs.md`.
 
 ## Related references
 
-[oracle-contract.md](oracle-contract.md) for the contract each wrapped model must
-meet, [multi-task-models.md](multi-task-models.md) for selecting outputs and the
+`references/oracle-contract.md` for the contract each wrapped model must
+meet, `references/multi-task-models.md` for selecting outputs and the
 hold-at-baseline idiom (which applies unchanged to concatenated models),
-[custom-losses.md](custom-losses.md) for `MinGap` across models,
-[memory-and-oom.md](memory-and-oom.md) when several oracles will not fit.
+`references/custom-losses.md` for `MinGap` across models,
+`references/memory-and-oom.md` when several oracles will not fit.

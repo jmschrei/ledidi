@@ -6,7 +6,7 @@ validate, plot. Each step links to the file that owns its details.
 
 The example uses a small GATA2 BPNet oracle (~0.5 MB from Zenodo, needs
 `bpnetlite`) so that the shapes and magnitudes are realistic. For a
-nothing-to-download version, see [first-design.md](first-design.md).
+nothing-to-download version, see `references/first-design.md`.
 
 ## 0. Wrap the oracle and check the contract
 
@@ -25,12 +25,12 @@ model = CountWrapper(ControlWrapper(model))     # sequence in, one count out
 `ControlWrapper` supplies BPNet's all-zero control track and `CountWrapper` selects
 the count head — together they turn a multi-input, multi-output BPNet into the
 single-tensor oracle ledidi requires. Whatever your model is, get it to that shape
-first and verify it → [oracle-contract.md](oracle-contract.md).
+first and verify it → `references/oracle-contract.md`.
 
 Which situation you are in decides the wrapper:
-[multi-task-models.md](multi-task-models.md) (a subset of one model's outputs),
-[multiple-models.md](multiple-models.md) (several models),
-[receptive-field.md](receptive-field.md) (window ≠ design field).
+`references/multi-task-models.md` (a subset of one model's outputs),
+`references/multiple-models.md` (several models),
+`references/receptive-field.md` (window ≠ design field).
 
 ## 1. Load the template and confirm the design is feasible
 
@@ -47,7 +47,7 @@ print(predict(model, X))     # 0.4569 -> GATA2 is barely predicted to bind here
 ```
 
 Cast to `float()`: `one_hot_encode` returns `int8` and ledidi needs `float32`
-→ [io-and-validation.md](io-and-validation.md). (`tangermeme.io.extract_loci` is the
+→ `references/io-and-validation.md`. (`tangermeme.io.extract_loci` is the
 other route when you have a BED file of loci.)
 
 **Do not skip the baseline prediction.** A template that already predicts your
@@ -82,14 +82,14 @@ diff, `designer(X)` — otherwise raises `RuntimeError: Expected all tensors to 
 the same device`.
 
 Watch the log: `output_loss` should fall quickly while `input_loss` (mean edits per
-sequence) rises, then shed edits late → [objective.md](objective.md). If the design
-does not move, `l` is the first knob ([objective.md](objective.md)); if it hits the
+sequence) rises, then shed edits late → `references/objective.md`. If the design
+does not move, `l` is the first knob (`references/objective.md`); if it hits the
 target with too many edits, raise `l`.
 
-To constrain *where* or *what* may be edited, add
-[`input_mask`](masks.md) or [`initial_weights`](initial-weights.md) here; to let
-ledidi fill a blanked span, see [inpainting.md](inpainting.md). For a range of
-target strengths in one call, see [catalogs-and-repeats.md](catalogs-and-repeats.md).
+To constrain *where* or *what* may be edited, add `input_mask`
+(`references/masks.md`) or `initial_weights` (`references/initial-weights.md`)
+here; to let ledidi fill a blanked span, see `references/inpainting.md`. For a
+range of target strengths in one call, see `references/catalogs-and-repeats.md`.
 
 ## 4. Prune
 
@@ -102,7 +102,7 @@ X_bar_p = torch.cat([greedy_pruning(model, X, X_bar[i:i+1], threshold=1)
 
 `greedy_pruning` handles one sequence at a time, hence the loop. It reverts edits
 whose removal barely changes the prediction, giving the smallest set that still
-works → [pruning.md](pruning.md).
+works → `references/pruning.md`.
 
 ## 5. Validate — the step that is easiest to skip and hardest to do without
 
@@ -120,12 +120,12 @@ X_bar_p_attr = deep_lift_shap(model, X_bar_p[:1])
 ```
 
 `.detach()` the designs first — they come back carrying an autograd graph
-([io-and-validation.md](io-and-validation.md)).
+(`references/io-and-validation.md`).
 
 Full protocol, including motif hits and round-tripping through other models →
-[validating-designs.md](validating-designs.md). If you used a cropped or tiled
+`references/validating-designs.md`. If you used a cropped or tiled
 oracle, also check the regions it could not see
-([receptive-field.md](receptive-field.md)).
+(`references/receptive-field.md`).
 
 ## 6. Plot
 
@@ -139,13 +139,13 @@ plot_edits(X_attr, [X_bar_attr, X_bar_p_attr], colors=['0.5', 'darkorange', 'mag
 
 `plot_edits` takes **attributions**, not sequences, and prepends the original as the
 first track — so `colors` and `axs` need one entry more than the number of designs →
-[plotting.md](plotting.md).
+`references/plotting.md`.
 
 ## Easy to skip, and worth checking
 
 - `target` is non-negative and correct, or `None` with a wrapper — a bad one returns
-  your template unedited ([multi-task-models.md](multi-task-models.md)).
+  your template unedited (`references/multi-task-models.md`).
 - The edit count is plausible for the effect size you asked for.
 - At least one **independently trained** model agrees
-  ([validating-designs.md](validating-designs.md)).
-- On a CUDA OOM: [memory-and-oom.md](memory-and-oom.md).
+  (`references/validating-designs.md`).
+- On a CUDA OOM: `references/memory-and-oom.md`.

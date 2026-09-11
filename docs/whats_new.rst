@@ -6,6 +6,26 @@ Release History
 ===============
 
 
+Version 2.2.1 (unreleased)
+==========================
+
+Highlights
+----------
+
+	- Rewrote every cross-reference in the bundled Claude Code Agent Skill as a
+	  plain backticked path (``references/objective.md``) instead of a Markdown
+	  link (``[references/objective.md](references/objective.md)``). Nothing that
+	  reads a skill renders Markdown, so the link form wrote each path twice for
+	  no benefit; 191 links were converted, shrinking the router by 7.2%. If you
+	  installed the skill previously, re-run ``ledidi-install-skills --force`` to
+	  pick up the corrections. The backticked form, and the requirement that
+	  every path a skill file names resolves to a file the skill ships, are now
+	  enforced by the skill's data-integrity tests.
+	- Moved ``tests/test_install_skills.py`` to ``tests/_skills/test_install.py``
+	  so the test layout mirrors the package layout, in which ``_skills`` is the
+	  only subpackage.
+
+
 Version 2.2.0
 =============
 

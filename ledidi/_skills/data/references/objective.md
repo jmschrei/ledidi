@@ -31,17 +31,17 @@ distributions, a custom loss built from several terms, or many oracles averaged
 together — the input loss dominates at `l=0.1` and the design will barely move.
 Drop `l` by one to three orders of magnitude in those settings, or set `l=0`
 first to confirm the output loss can be optimized at all, then raise it until the
-edit count is acceptable. See [custom-losses.md](custom-losses.md).
+edit count is acceptable. See `references/custom-losses.md`.
 
 ## The output loss sees the *sliced* output
 
 `fit_transform` computes `y_hat = model(X_hat)[:, target]` and only then calls
 `output_loss(y_hat, y_bar)`, so `y_bar` must match the width **after** slicing
-→ [io-and-validation.md](io-and-validation.md).
+→ `references/io-and-validation.md`.
 
 `target` is an `int` selecting exactly one output, or `None` for all of them. It
 is not a mask and not a list, and a negative or out-of-range value fails
-silently — see [multi-task-models.md](multi-task-models.md) before using it.
+silently — see `references/multi-task-models.md` before using it.
 
 ## The other two knobs: `eps` and `tau`
 
@@ -132,7 +132,7 @@ settling to 28.19 by convergence)
 
 A healthy run drops `output_loss` fast while `input_loss` climbs, then slowly
 sheds edits — `input_loss` falling late in the run is the input term doing its
-job. Plot it with [`plot_loss`](plotting.md).
+job. Plot it with `plot_loss` (`references/plotting.md`).
 
 ## What you get back is the best iterate
 
@@ -146,7 +146,7 @@ from that iteration. Consequences:
   improves on the initial total loss, you get your template back with zero edits.
   A `nan` output loss produces exactly this, because `nan < best_total_loss` is
   never true — that is the mechanism behind the silent failures in
-  [multi-task-models.md](multi-task-models.md).
+  `references/multi-task-models.md`.
 
 ## Stopping
 
@@ -160,8 +160,8 @@ from that iteration. Consequences:
 
 ## Related references
 
-[io-and-validation.md](io-and-validation.md) for the exact shapes,
-[custom-losses.md](custom-losses.md) for replacing the output loss,
-[masks.md](masks.md) and [initial-weights.md](initial-weights.md) for constraining
-*where* the input loss is allowed to be paid, [designer-object.md](designer-object.md)
+`references/io-and-validation.md` for the exact shapes,
+`references/custom-losses.md` for replacing the output loss,
+`references/masks.md` and `references/initial-weights.md` for constraining
+*where* the input loss is allowed to be paid, `references/designer-object.md`
 for `return_history` and reusing a fit.

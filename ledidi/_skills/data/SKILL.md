@@ -36,14 +36,14 @@ return a scalar — do not carry that habit across.
 
 ## Read these first
 
-- **[The objective](references/objective.md)** — every design is
+- **The objective**, `references/objective.md` — every design is
   `output_loss(y_hat, y_bar) + l * input_loss`, where the input loss is the mean
   number of edits per sequence. `l` is the exchange rate between "hit the target"
   and "make few edits", and it is the knob you will actually tune. Also covers
   what the `verbose` log lines mean and why the returned design is the
   best-scoring iterate rather than the last one.
 
-- **[The oracle contract](references/oracle-contract.md)** — what your model must
+- **The oracle contract**, `references/oracle-contract.md` — what your model must
   satisfy before any of this works: differentiable, `model(X)` sliceable as
   `[:, target]`, frozen and `.eval()`ed for you. Read it before wrapping anything.
 
@@ -54,28 +54,28 @@ each with its own file:
 
 | Situation | Read |
 |---|---|
-| one multi-task model, you want **some of its outputs** | [references/multi-task-models.md](references/multi-task-models.md) |
-| **several independent models** balanced in one design | [references/multiple-models.md](references/multiple-models.md) |
-| the model's **input window ≠ the sequence you want to design** | [references/receptive-field.md](references/receptive-field.md) |
+| one multi-task model, you want **some of its outputs** | `references/multi-task-models.md` |
+| **several independent models** balanced in one design | `references/multiple-models.md` |
+| the model's **input window ≠ the sequence you want to design** | `references/receptive-field.md` |
 
 ## Task → reference file
 
 | If the task is… | Read |
 |---|---|
-| **starting from scratch** — a real oracle, end to end: design → prune → validate → plot | [references/pipeline.md](references/pipeline.md) |
-| a first design / learning the mechanics with no downloads | [references/first-design.md](references/first-design.md) |
-| tensor shapes, dtypes, or a `ValueError`/`TypeError` you do not understand | [references/io-and-validation.md](references/io-and-validation.md) |
-| forbidding edits at certain **positions** | [references/masks.md](references/masks.md) |
-| forbidding or forcing **specific characters**, or setting soft priors | [references/initial-weights.md](references/initial-weights.md) |
-| letting ledidi **fill in** a blanked region (in-painting) | [references/inpainting.md](references/inpainting.md) |
-| a non-MSE objective: `MinGap`, rewards, one-sided or ballpark losses, profiles | [references/custom-losses.md](references/custom-losses.md) |
-| designing against a **range** of target strengths (affinity catalog), or repeats | [references/catalogs-and-repeats.md](references/catalogs-and-repeats.md) |
-| sampling many designs cheaply, or reusing a fitted designer | [references/designer-object.md](references/designer-object.md) |
-| **trimming** unnecessary edits after design | [references/pruning.md](references/pruning.md) |
-| checking a design is real and not oracle exploitation | [references/validating-designs.md](references/validating-designs.md) |
-| plotting losses, edit maps, or edits on attribution tracks | [references/plotting.md](references/plotting.md) |
-| a **CUDA out-of-memory** error | [references/memory-and-oom.md](references/memory-and-oom.md) |
-| reproducibility, seeding, CPU vs GPU | [references/reproducibility.md](references/reproducibility.md) |
+| **starting from scratch** — a real oracle, end to end: design → prune → validate → plot | `references/pipeline.md` |
+| a first design / learning the mechanics with no downloads | `references/first-design.md` |
+| tensor shapes, dtypes, or a `ValueError`/`TypeError` you do not understand | `references/io-and-validation.md` |
+| forbidding edits at certain **positions** | `references/masks.md` |
+| forbidding or forcing **specific characters**, or setting soft priors | `references/initial-weights.md` |
+| letting ledidi **fill in** a blanked region (in-painting) | `references/inpainting.md` |
+| a non-MSE objective: `MinGap`, rewards, one-sided or ballpark losses, profiles | `references/custom-losses.md` |
+| designing against a **range** of target strengths (affinity catalog), or repeats | `references/catalogs-and-repeats.md` |
+| sampling many designs cheaply, or reusing a fitted designer | `references/designer-object.md` |
+| **trimming** unnecessary edits after design | `references/pruning.md` |
+| checking a design is real and not oracle exploitation | `references/validating-designs.md` |
+| plotting losses, edit maps, or edits on attribution tracks | `references/plotting.md` |
+| a **CUDA out-of-memory** error | `references/memory-and-oom.md` |
+| reproducibility, seeding, CPU vs GPU | `references/reproducibility.md` |
 
 ## The rest of the package
 
@@ -83,7 +83,7 @@ each with its own file:
   placement, repeats, affinity catalogs, and post-fit sampling.
 - `ledidi.Ledidi` — the underlying `torch.nn.Module` optimizer
   (`fit_transform`, `forward`). Reach for it only to fit once and sample
-  repeatedly → [designer-object.md](references/designer-object.md).
+  repeatedly → `references/designer-object.md`.
 - `ledidi.losses.MinGap` — output-specific design without target values.
 - `ledidi.wrappers.DesignWrapper` — concatenate several oracles into one.
 - `ledidi.pruning.greedy_pruning` — post-hoc edit trimming.
@@ -110,7 +110,7 @@ each with its own file:
   `Ledidi.__init__`, which takes no `**kwargs`, so a tangermeme habit like
   `output_mask=`, `args=`, or `func=` raises `TypeError` rather than being silently
   ignored. Output selection is `target` →
-  [multi-task-models.md](references/multi-task-models.md).
+  `references/multi-task-models.md`.
 - **Designs from the default return path carry an autograd graph** (`n_samples`
   draws are detached). `.detach()` before holding many, or before handing them to
-  code that assumes plain tensors → [memory-and-oom.md](references/memory-and-oom.md).
+  code that assumes plain tensors → `references/memory-and-oom.md`.

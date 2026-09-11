@@ -2,7 +2,7 @@
 
 The smallest complete design, with a toy oracle so there is nothing to download and
 it runs on a CPU in seconds. Use this to learn the mechanics and to sanity-check an
-installation; for a real oracle end to end, see [pipeline.md](pipeline.md).
+installation; for a real oracle end to end, see `references/pipeline.md`.
 
 ## The three ingredients
 
@@ -42,10 +42,10 @@ Three arguments in that call are worth noticing:
 - **`device='cpu'` is mandatory here.** The default is `'cuda'` — not "CUDA if
   available" — so on a CPU-only machine every call raises without it.
 - **`random_state=0`** makes sampling reproducible without touching the global torch
-  RNG → [reproducibility.md](reproducibility.md).
+  RNG → `references/reproducibility.md`.
 - **`verbose=False`** silences the per-iteration log. Leave it on while learning; the
   log is the fastest way to see whether the design is working
-  ([objective.md](objective.md) explains the lines).
+  (`references/objective.md` explains the lines).
 
 ## Did it work
 
@@ -74,7 +74,7 @@ than overwriting a whole stretch of it.
 
 The `batch_size` designs are all sampled from the *same* learned weight matrix, so
 they are variations on one design rather than independent solutions →
-[designer-object.md](designer-object.md).
+`references/designer-object.md`.
 
 ## If a design returns zero edits
 
@@ -83,15 +83,15 @@ In order of likelihood:
 1. **The template already predicts `y_bar`.** Check `model(X)` first; the `iter=I`
    log line shows this as an output loss near zero.
 2. **`l` is too high** for the scale of your output loss →
-   [objective.md](objective.md).
+   `references/objective.md`.
 3. **The gradient does not reach the input**, usually a `detach`/`no_grad`/argmax in
    the model, or an oracle that is invariant to its input
-   → [oracle-contract.md](oracle-contract.md).
+   → `references/oracle-contract.md`.
 4. **The oracle cannot represent what you asked for**, so the output loss plateaus
    well above zero.
 
 ## Related references
 
-[pipeline.md](pipeline.md) for the same workflow with a real oracle plus pruning and
-validation, [io-and-validation.md](io-and-validation.md) for shapes and error
-messages, [objective.md](objective.md) for `l` and the logs.
+`references/pipeline.md` for the same workflow with a real oracle plus pruning and
+validation, `references/io-and-validation.md` for shapes and error
+messages, `references/objective.md` for `l` and the logs.

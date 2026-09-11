@@ -14,7 +14,7 @@ not several independent solutions.
 
 - want more sequences from **one** design → `n_samples` or the designer's `forward`.
 - want **different** designs → `n_repeats`, or re-run with a different `random_state`
-  → [catalogs-and-repeats.md](catalogs-and-repeats.md).
+  → `references/catalogs-and-repeats.md`.
 
 A different seed makes different designs *possible*, not certain. When one solution
 is clearly cheapest, every seed finds it: on a toy oracle asked to build a single
@@ -36,7 +36,7 @@ returned count is exact.
 The draw runs under `torch.no_grad()`, so these designs come back **detached** —
 unlike the default return path, which carries a graph. For very large draws option 2
 is still cheaper, since it lets you move each chunk off the device as you go
-→ [memory-and-oom.md](memory-and-oom.md).
+→ `references/memory-and-oom.md`.
 
 ## Option 2: keep the fitted designer
 
@@ -56,11 +56,11 @@ device, but leaves your template where it was, so `designer(X)` with a CPU `X` r
 sampled sequences each time. This is the memory-safe way to draw a lot, and it lets
 you interleave sampling with other work, save the designer, or inspect
 `designer.weights` to see what was learned (useful for checking whether a prior
-survived → [initial-weights.md](initial-weights.md)).
+survived → `references/initial-weights.md`).
 
 With `n_repeats` or a catalog, `return_designer` gives a list (or list of lists)
 following the same collapsing rules as the designs
-→ [catalogs-and-repeats.md](catalogs-and-repeats.md).
+→ `references/catalogs-and-repeats.md`.
 
 ## Option 3: build `Ledidi` yourself
 
@@ -76,7 +76,7 @@ You now own device placement, and `shape` is `(n_channels, length)` — two posi
 integers, **no batch dimension** (a wrong shape raises `ValueError`). Every keyword
 `ledidi()` forwards is available here directly. Use this when you need to subclass, to
 write a custom optimization loop (see the accumulation recipes in
-[memory-and-oom.md](memory-and-oom.md)), or to hold the object across a long session.
+`references/memory-and-oom.md`), or to hold the object across a long session.
 
 ### Footgun: refitting resumes from the previous best weights
 
@@ -99,13 +99,14 @@ history.keys()     # 'edits', 'input_loss', 'output_loss', 'total_loss', 'batch_
 ```
 
 - `input_loss` / `output_loss` / `total_loss` — one float per iteration. Plot with
-  [`plot_loss`](plotting.md).
+  `plot_loss` (`references/plotting.md`).
 - `edits` — one `torch.where(...)` tuple per iteration, recording every position that
-  differed from the template at that step. Plot with [`plot_history`](plotting.md).
+  differed from the template at that step. Plot with `plot_history`
+  (`references/plotting.md`).
 - `batch_size` — carried along so the plotting helpers can convert row indices to
   iterations.
 - These tensors live on the **design device**, so a CUDA run accumulates them in GPU
-  memory → [memory-and-oom.md](memory-and-oom.md).
+  memory → `references/memory-and-oom.md`.
 
 Note that history is recorded for *every* iteration, including ones worse than the
 best, while the returned design comes from the best iterate only — the final point on
@@ -119,7 +120,7 @@ and returns meaningless sequences. Pass the same template you fit with.
 
 ## Related references
 
-[catalogs-and-repeats.md](catalogs-and-repeats.md) for independent designs and return
-shapes, [memory-and-oom.md](memory-and-oom.md) for the sampling memory cost and custom
-loops, [objective.md](objective.md) for what "best iterate" means,
-[plotting.md](plotting.md) for consuming the history.
+`references/catalogs-and-repeats.md` for independent designs and return
+shapes, `references/memory-and-oom.md` for the sampling memory cost and custom
+loops, `references/objective.md` for what "best iterate" means,
+`references/plotting.md` for consuming the history.

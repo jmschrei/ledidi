@@ -51,7 +51,7 @@ with `target=3`. **A mismatch prunes against the wrong objective and is not
 reported** — it is a silently different question, not an error.
 
 Negative and out-of-range values are rejected here for the same reason as in design
-(`ValueError`) → [multi-task-models.md](multi-task-models.md). Older releases
+(`ValueError`) → `references/multi-task-models.md`. Older releases
 accepted them, and the consequence here was worse than in design: an empty selection
 made `torch.abs(y_hat - y_mod).sum()` equal `0.0` for every candidate, below any
 threshold, so **every edit was pruned** and the template came back. Measured on a
@@ -80,12 +80,12 @@ was.
 
 - **Check what survived.** Pruning tends to keep exactly the high-attribution edits and
   discard low-attribution ones, which is a useful cross-check on both the pruning and
-  the design → [validating-designs.md](validating-designs.md).
+  the design → `references/validating-designs.md`.
 - It is independent of how the edits were produced — any pair of (template, edited
   sequence) works, not just ledidi output.
 
 ## Related references
 
-[multi-task-models.md](multi-task-models.md) for `target` semantics and the empty-slice
-failure, [validating-designs.md](validating-designs.md) for confirming pruned designs
-still hold up, [pipeline.md](pipeline.md) for where pruning sits in the workflow.
+`references/multi-task-models.md` for `target` semantics and the empty-slice
+failure, `references/validating-designs.md` for confirming pruned designs
+still hold up, `references/pipeline.md` for where pruning sits in the workflow.

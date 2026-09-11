@@ -1,5 +1,7 @@
-# test_install_skills.py
+# test_install.py
 # Contact: Jacob Schreiber <jmschreiber91@gmail.com>
+
+import re
 
 import pytest
 
@@ -26,12 +28,79 @@ def test_bundled_skill_frontmatter():
 	assert "description:" in text
 
 
+# Reference files that ledidi's skill points at by name but does not own: they
+# ship with tangermeme's skill, which the text names explicitly at every one of
+# these mentions. They use the same `references/x.md` form, so the resolution
+# check below has to exempt them, and the exemption is asserted disjoint from
+# ledidi's own files so it can never hide one going missing.
+TANGERMEME_REFERENCES = frozenset([
+	"annotate.md",
+	"comparing-models.md",
+	"deep_lift_shap.md",
+	"design.md",
+	"io-loci.md",
+	"model-wrapping.md",
+	"plot.md",
+])
+
+
+def _skill_documents():
+	"""Return every Markdown file that ships in the skill, as (name, text)."""
+
+	src = _bundled_skill_dir()
+	paths = [src / "SKILL.md"] + sorted((src / "references").glob("*.md"))
+	return [(path.name, path.read_text()) for path in paths]
+
+
 def test_every_reference_is_linked_from_skill():
 	src = _bundled_skill_dir()
 	text = (src / "SKILL.md").read_text()
 
 	for path in sorted((src / "references").glob("*.md")):
-		assert "references/{}".format(path.name) in text, path.name
+		assert "`references/{}`".format(path.name) in text, path.name
+
+
+def test_no_markdown_links_to_reference_files():
+	"""Cross-references are backticked paths, never Markdown links.
+
+	Nothing that reads a skill renders Markdown, so a link spends twice the
+	characters on the same path. A link would also slip past the checks above
+	and below, since neither of those looks inside link syntax.
+	"""
+
+	found = []
+	for name, text in _skill_documents():
+		for link in re.findall(r'\[[^\]]*\]\([^)]*\.md\)', text):
+			found.append("{}: {}".format(name, link))
+
+	assert found == [], "use `references/x.md`, not a link: {}".format(found)
+
+
+def test_cross_references_are_complete_paths_that_resolve():
+	"""Every backticked `*.md` is a skill-root path naming a real file.
+
+	A bare `masks.md` does not say which directory it lives in, so an agent
+	following the pointer has to search for the target. Mentions are written
+	relative to the skill root, `references/masks.md`, and must name a file
+	that exists -- or one of TANGERMEME_REFERENCES, which ledidi's skill
+	deliberately points at in tangermeme's.
+	"""
+
+	existing = {path.name
+		for path in (_bundled_skill_dir() / "references").glob("*.md")}
+
+	assert existing.isdisjoint(TANGERMEME_REFERENCES)
+
+	for name, text in _skill_documents():
+		for target in re.findall(r'`([A-Za-z0-9_/.-]*\.md)`', text):
+			assert target == "SKILL.md" or target.startswith("references/"), (
+				"{} names `{}` by bare filename; write the complete "
+				"skill-root-relative path".format(name, target))
+
+			basename = target.split("/")[-1]
+			assert basename in existing or basename in TANGERMEME_REFERENCES, (
+				"{} points at `{}`, which is not a file in the skill".format(
+					name, target))
 
 
 def test_default_dest():

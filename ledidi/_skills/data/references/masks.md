@@ -20,8 +20,8 @@ X_bar = ledidi(model, X, y_bar, input_mask=input_mask, device='cuda')
 
 This polarity is the opposite of the "mask of positions I care about" convention
 used elsewhere. Getting it backwards protects exactly the region you meant to edit,
-and the design still runs and reports a plausible loss. Verify it
-([below](#verifying-a-mask-did-what-you-meant)) rather than trusting it.
+and the design still runs and reports a plausible loss. Verify it — see
+"Verifying a mask did what you meant" below — rather than trusting it.
 - Positions need not be contiguous. Any pattern of `True` works.
 - It is a **hard** constraint, not a preference: masked positions receive `-inf`
   weights, so no amount of optimization pressure can overcome them. Verified in the
@@ -43,7 +43,7 @@ So a masked position can only ever draw its original character.
 `input_mask` is a convenience layer over `initial_weights`. Anything finer —
 forbidding *particular characters* rather than whole positions, or forcing a
 character in — is done by building the weight matrix yourself →
-[initial-weights.md](initial-weights.md).
+`references/initial-weights.md`.
 
 The template-character restore is scoped to the mask, so `initial_weights` you set
 elsewhere survive untouched — including a prior sitting on a template character.
@@ -52,7 +52,7 @@ hard constraint and takes precedence.
 
 Older versions of ledidi applied that restore to the *whole* sequence, which
 silently discarded template-character priors everywhere and broke the forced-edit
-idiom in [initial-weights.md](initial-weights.md) whenever a mask was also passed.
+idiom in `references/initial-weights.md` whenever a mask was also passed.
 If you are reading code written against an older release, that is why it may have
 combined the two mechanisms carefully or not at all.
 
@@ -67,7 +67,7 @@ combined the two mechanisms carefully or not at all.
   the mask working; check the mask directly.
 - Masking is a statement about the *sequence*, not the *oracle*. To constrain
   predictions rather than positions — "keep transcription where it is" — hold outputs
-  at baseline instead ([multi-task-models.md](multi-task-models.md)), which lets
+  at baseline instead (`references/multi-task-models.md`), which lets
   ledidi rearrange sequence freely as long as the readouts do not move.
 
 ## Verifying a mask did what you meant
@@ -87,8 +87,8 @@ Cheap, and it catches an inverted mask immediately.
 
 ## Related references
 
-[initial-weights.md](initial-weights.md) for per-character constraints, forcing
-edits, and soft priors; [inpainting.md](inpainting.md) for the opposite move
-(marking a span as free to fill); [io-and-validation.md](io-and-validation.md) for
-the dtype and shape errors; [receptive-field.md](receptive-field.md) for masking off
+`references/initial-weights.md` for per-character constraints, forcing
+edits, and soft priors; `references/inpainting.md` for the opposite move
+(marking a span as free to fill); `references/io-and-validation.md` for
+the dtype and shape errors; `references/receptive-field.md` for masking off
 regions no oracle actually scores.

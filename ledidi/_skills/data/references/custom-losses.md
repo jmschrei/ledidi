@@ -16,7 +16,7 @@ def my_loss(y_hat, y_bar):
   `tangermeme.design`'s `loss(y, y_hat)`. Getting it backwards is silent for
   symmetric losses like MSE and wrong for everything else.
 - `y_hat` is the output **after `target` slicing**, and `y_bar` must match that width
-  → [io-and-validation.md](io-and-validation.md).
+  → `references/io-and-validation.md`.
 - **Must return a scalar** — see the footgun below.
 - Must be differentiable with respect to `y_hat`.
 - Any callable works: a function, a `torch.nn.Module`, or a plain class with
@@ -70,10 +70,10 @@ The two cannot be combined. With `target=int` the loss sees a single column, so:
   `IndexError: The shape of the mask [3] at index 0 does not match ...`.
 
 Leave `target=None` and expose exactly the outputs you want to contrast with a wrapper
-→ [multi-task-models.md](multi-task-models.md).
+→ `references/multi-task-models.md`.
 
 Across several models, `MinGap` additionally requires **comparable dynamic ranges**,
-or the gap it maximizes is unreachable → [multiple-models.md](multiple-models.md).
+or the gap it maximizes is unreachable → `references/multiple-models.md`.
 
 ## Rewarding a direction instead of matching a value
 
@@ -139,11 +139,11 @@ Custom losses are frequently orders of magnitude smaller than MSE on counts — 
 a 1 kbp profile, or a reward term of a few units. At `l=0.1` the input loss then
 dominates and the design barely moves. Set `l=0` first to confirm the objective is
 optimizable at all, then raise it until the edit count is acceptable →
-[objective.md](objective.md).
+`references/objective.md`.
 
 ## Related references
 
-[objective.md](objective.md) for how the output loss combines with the input loss,
-[multi-task-models.md](multi-task-models.md) for exposing the outputs your loss needs
-and for the hold-at-baseline idiom, [io-and-validation.md](io-and-validation.md) for
+`references/objective.md` for how the output loss combines with the input loss,
+`references/multi-task-models.md` for exposing the outputs your loss needs
+and for the hold-at-baseline idiom, `references/io-and-validation.md` for
 `y_bar` shapes including placeholders.
