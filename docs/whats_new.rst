@@ -24,6 +24,30 @@ Highlights
 	- Moved ``tests/test_install_skills.py`` to ``tests/_skills/test_install.py``
 	  so the test layout mirrors the package layout, in which ``_skills`` is the
 	  only subpackage.
+	- Added :class:`ledidi.losses.GapLoss`, a generalization of
+	  :class:`ledidi.losses.MinGap` that can average the off-target outputs
+	  instead of maximizing them, and that can bound either side of the gap.
+	  ``GapLoss(in_mask)`` is exactly ``MinGap(in_mask)``, so nothing changes
+	  unless one of the new keyword arguments is passed.
+	- A plain gap has no reason to stop. It will keep spending edits driving
+	  off-target outputs below anything the model meaningfully produces and
+	  driving on-target outputs past the largest value it has ever produced,
+	  because both reduce the loss; neither necessarily improves the sequence.
+	  ``floor`` clamps the off-target outputs before they are reduced, so an
+	  output already at its floor contributes no gradient, and ``ceiling``
+	  penalizes on-target outputs quadratically only above a bound, leaving
+	  activity below it unpenalized while giving the loss a finite optimum at
+	  ``ceiling + 1 / (2 * ceiling_weight)``.
+	- ``off_reduction='mean'`` is more sensitive to a shift that lifts every
+	  off-target output together, since a maximum only ever sees one of them. It
+	  trades away the guarantee a maximum gives, because a mean can be satisfied
+	  by a sequence that is also high in a single off-target output when the rest
+	  sit low enough to carry the average.
+	- The quadratic ceiling term also restores curvature. Without it the loss is
+	  linear in the on-target outputs, so the marginal value of an edit barely
+	  decreases as the design improves and the edit count tends to be
+	  all-or-nothing as ``l`` is varied rather than trading off smoothly against
+	  it.
 
 
 Version 2.2.0
