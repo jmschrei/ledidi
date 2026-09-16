@@ -75,6 +75,60 @@ Leave `target=None` and expose exactly the outputs you want to contrast with a w
 Across several models, `MinGap` additionally requires **comparable dynamic ranges**,
 or the gap it maximizes is unreachable → `references/multiple-models.md`.
 
+## `GapLoss` — the same contrast, with bounds and a mean option
+
+`ledidi.losses.GapLoss` is `MinGap` plus three keyword arguments.
+`GapLoss(in_mask)` is exactly `MinGap(in_mask)`; each argument changes when the
+optimizer stops pushing.
+
+```python
+import torch
+from ledidi.losses import GapLoss
+
+in_mask = torch.tensor([False, True, False])
+loss = GapLoss(in_mask, off_reduction='mean', floor=-0.5, ceiling=4.0)
+X_bar = ledidi(model, X, torch.zeros(1, 3), output_loss=loss, device='cuda')
+```
+
+- **`floor`** clamps the off-target outputs before they are reduced, so one
+  already at its floor contributes no gradient. Without it the loss keeps paying
+  for edits that push off-target outputs below anything the model meaningfully
+  produces. Once every off-target output bottoms out, the only way left to
+  reduce the loss is to raise the on-target outputs — which is the answer to
+  `MinGap`'s "nothing forces the on-target predictions to be high" above, without
+  naming a target value.
+- **`ceiling`** penalizes on-target outputs quadratically, and only above the
+  bound: activity below it is not penalized at all. The on-target gradient
+  `-1 + 2 * ceiling_weight * (on - ceiling)` vanishes at
+  `ceiling + 1 / (2 * ceiling_weight)`, so with the default weight of 2.0 the
+  design settles a quarter of a unit past the ceiling rather than extrapolating.
+- **`off_reduction='mean'`** averages the off-target outputs instead of taking
+  the maximum. A maximum only ever sees the single worst off-target, so lowering
+  the others earns nothing; a mean notices a shift that lifts all of them
+  together. The cost is the guarantee — a mean can be satisfied by a sequence
+  that is also high in one off-target output when the rest sit low enough to
+  carry the average, so check the per-output margins rather than the aggregate.
+- Both bounds take a float (broadcast to every output) or a full `(n_outputs,)`
+  tensor. Entries on the side they do not apply to are ignored, and with several
+  on-target outputs the **minimum** `ceiling` entry binds, matching the minimum
+  taken on the on-target side.
+
+Derive the bounds from data rather than picking them: a floor from what the
+model predicts on inputs known to be inactive, a ceiling from a high quantile of
+its predictions on real inputs. That keeps the design inside the range the model
+was fit on without turning the objective back into a target.
+
+`GapLoss` shares `MinGap`'s other properties — it ignores `y_bar`, requires
+`target=None`, and is a plain class rather than a `torch.nn.Module`.
+
+### The ceiling also makes the edit count tunable
+
+Without it the loss is linear in the on-target outputs, so the marginal value of
+an edit barely decreases as the design improves. Sweeping `l` then tends to give
+all-or-nothing edit counts — hundreds at one value and zero at the next step up
+— rather than a smooth trade-off. The quadratic arm restores the curvature that
+makes a knee exist to tune to.
+
 ## Rewarding a direction instead of matching a value
 
 MSE needs a specific number for every output, and often you do not have one: you know

@@ -2,4 +2,4 @@ losses
 ======
 
 .. automodule:: ledidi.losses
-	:members: MinGap
+	:members: MinGap, GapLoss

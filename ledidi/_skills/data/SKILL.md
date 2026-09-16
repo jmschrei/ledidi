@@ -68,7 +68,7 @@ each with its own file:
 | forbidding edits at certain **positions** | `references/masks.md` |
 | forbidding or forcing **specific characters**, or setting soft priors | `references/initial-weights.md` |
 | letting ledidi **fill in** a blanked region (in-painting) | `references/inpainting.md` |
-| a non-MSE objective: `MinGap`, rewards, one-sided or ballpark losses, profiles | `references/custom-losses.md` |
+| a non-MSE objective: `MinGap`, `GapLoss`, rewards, one-sided or ballpark losses, profiles | `references/custom-losses.md` |
 | designing against a **range** of target strengths (affinity catalog), or repeats | `references/catalogs-and-repeats.md` |
 | sampling many designs cheaply, or reusing a fitted designer | `references/designer-object.md` |
 | **trimming** unnecessary edits after design | `references/pruning.md` |
