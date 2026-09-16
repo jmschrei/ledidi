@@ -6,7 +6,7 @@ Release History
 ===============
 
 
-Version 2.2.1 (unreleased)
+Version 2.3.0 (unreleased)
 ==========================
 
 Highlights
